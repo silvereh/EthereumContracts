@@ -15,7 +15,7 @@ abstract contract ERC2981Base is IERC165, IERC2981 {
 
 	// Royalty rate is stored out of 10,000 instead of a percentage to allow for
 	// up to two digits below the unit such as 2.5% or 1.25%.
-	uint256 public constant ROYALTY_BASE = 10000;
+	uint256 private constant ROYALTY_BASE = 10000;
 
 	// Represents the percentage of royalties on each sale on secondary markets.
 	// Set to 0 to have no royalties.
@@ -48,7 +48,7 @@ abstract contract ERC2981Base is IERC165, IERC2981 {
 	* 
 	* - `royaltyRate_` cannot be higher than `ROYALTY_BASE`;
 	*/
-	function _setRoyaltyInfo( address recipient_, uint256 rate_ ) internal {
+	function _setRoyaltyInfo( address recipient_, uint256 rate_ ) internal virtual {
 		if ( rate_ > ROYALTY_BASE ) {
 			revert IERC2981_INVALID_ROYALTIES();
 		}

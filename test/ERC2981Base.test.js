@@ -18,7 +18,6 @@ const TEST = {
 	EVENTS : {
 	},
 	METHODS : {
-		ROYALTY_BASE      : true,
 		royaltyInfo       : true,
 		setRoyaltyInfo    : true,
 		supportsInterface : true,
@@ -31,7 +30,6 @@ const CONTRACT = {
 	EVENTS : {
 	},
 	METHODS : {
-		ROYALTY_BASE      : 'ROYALTY_BASE()',
 		royaltyInfo       : 'royaltyInfo(uint256,uint256)',
 		setRoyaltyInfo    : 'setRoyaltyInfo(address,uint256)',
 		supportsInterface : 'supportsInterface(bytes4)',
@@ -151,14 +149,6 @@ describe( TEST.NAME, () => {
 
 		describe( 'Reading ...', () => {
 			if ( TEST.USE_CASE.READING ) {
-				describe( CONTRACT.METHODS.ROYALTY_BASE, () => {
-					if ( TEST.METHODS.ROYALTY_BASE ) {
-						it( 'ROYALTY_BASE should be ' + CONTRACT.PARAMS.ROYALTY_BASE, async () => {
-							expect( await contract.ROYALTY_BASE() ).to.equal( CONTRACT.PARAMS.ROYALTY_BASE )
-						})
-					}
-				})
-
 				describe( CONTRACT.METHODS.royaltyInfo, () => {
 					if ( TEST.METHODS.royaltyInfo ) {
 						it( 'Royalty info for sale price 1 ETH should be ' + contract_deployer_name + ' and royalties amount ' + CST.ONE_ETH.mul( CONTRACT.PARAMS.ROYALTY_RATE ).div( CONTRACT.PARAMS.ROYALTY_BASE ), async () => {
@@ -250,14 +240,6 @@ describe( TEST.NAME, () => {
 			if ( TEST.USE_CASE.WRONG_INPUT ) {
 				describe( 'Reading ...', () => {
 					if ( TEST.USE_CASE.READING ) {
-						describe( CONTRACT.METHODS.ROYALTY_BASE, () => {
-							if ( TEST.METHODS.ROYALTY_BASE ) {
-								it( 'Input more than 0 argument should throw "' + THROW.UNEXPECTED_ARGUMENT + '"', async () => {
-									await expect( contract.ROYALTY_BASE( 1 ) ).to.be.rejectedWith( THROW.UNEXPECTED_ARGUMENT )
-								})
-							}
-						})
-
 						describe( CONTRACT.METHODS.royaltyInfo, () => {
 							if ( TEST.METHODS.royaltyInfo ) {
 								it( 'Input less than 2 argument should throw "' + THROW.MISSING_ARGUMENT + '"', async () => {
