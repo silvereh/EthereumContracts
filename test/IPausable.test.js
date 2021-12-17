@@ -6,6 +6,8 @@ chai.use( chaiAsPromised )
 const expect = chai.expect ;
 const { ethers } = require( 'hardhat' )
 
+const { generateFailTest, enumCases } = require( './test-module' )
+
 // For activating or de-activating test cases
 const TEST = {
 	NAME : 'IPausable',
@@ -308,40 +310,29 @@ describe( TEST.NAME, () => {
 					if ( TEST.USE_CASES.WRITING ) {
 						describe( CONTRACT.METHODS.setSaleState, () => {
 							if ( TEST.METHODS.setSaleState ) {
+								const arg1Tests = enumCases( 'newOwner_' )
+
 								it( 'Input less than 1 argument should throw "' + THROW.MISSING_ARGUMENT + '"', async () => {
-									await expect( contract.connect( contract_deployer ).setSaleState() ).to.be.rejectedWith( THROW.MISSING_ARGUMENT )
+									await generateFailTest( contract.setSaleState )
 								})
 
 								it( 'Input more than 1 argument should throw "' + THROW.UNEXPECTED_ARGUMENT + '"', async () => {
-									await expect( contract.connect( contract_deployer ).setSaleState( SALE_STATE.SALE, 1 ) ).to.be.rejectedWith( THROW.UNEXPECTED_ARGUMENT )
+									const args = {
+										err  : THROW.UNEXPECTED_ARGUMENT,
+										arg1 : SALE_STATE.SALE,
+										arg3 : 1,
+									}
+									await generateFailTest( contract.setSaleState, args )
 								})
 
-								it( 'Input an array of saleState should throw "' + THROW.INVALID_BIG_NUMBER_VALUE + '"', async () => {
-									await expect( contract.connect( contract_deployer ).setSaleState( [ SALE_STATE ] ) ).to.be.rejectedWith( THROW.INVALID_BIG_NUMBER_VALUE )
-								})
-
-								it( 'Input address instead of `newState_` should throw "' + THROW.VALUE_OUT_OF_BOUNDS + '"', async () => {
-									await expect( contract.connect( contract_deployer ).setSaleState( token_owner_address ) ).to.be.rejectedWith( THROW.VALUE_OUT_OF_BOUNDS )
-								})
-
-								it( 'Input bytes4 instead of `newState_` should throw "' + THROW.VALUE_OUT_OF_BOUNDS + '"', async () => {
-									await expect( contract.connect( contract_deployer ).setSaleState( CST.INTERFACE_ID.IERC721 ) ).to.be.rejectedWith( THROW.VALUE_OUT_OF_BOUNDS )
-								})
-
-								it( 'Input booldean instead of `newState_` should throw "' + THROW.INVALID_BIG_NUMBER_VALUE + '"', async () => {
-									await expect( contract.connect( contract_deployer ).setSaleState( true ) ).to.be.rejectedWith( THROW.INVALID_BIG_NUMBER_VALUE )
-								})
-
-								it( 'Input object instead of `newState_` should throw "' + THROW.INVALID_BIG_NUMBER_VALUE + '"', async () => {
-									await expect( contract.connect( contract_deployer ).setSaleState( { "rofl": SALE_STATE.SALE } ) ).to.be.rejectedWith( THROW.INVALID_BIG_NUMBER_VALUE )
-								})
-
-								it( 'Input string instead of `newState_` should throw "' + THROW.INVALID_BIG_NUMBER_STR + '"', async () => {
-									await expect( contract.connect( contract_deployer ).setSaleState( 'hello' ) ).to.be.rejectedWith( THROW.INVALID_BIG_NUMBER_STR )
-								})
-
-								it( 'Input address cast as BigNumber instead of `newState_` should throw "' + THROW.VALUE_OUT_OF_BOUNDS + '"', async () => {
-									await expect( contract.connect( contract_deployer ).setSaleState( ethers.BigNumber.from( token_owner_address ) ) ).to.be.rejectedWith( THROW.VALUE_OUT_OF_BOUNDS )
+								arg1Tests.forEach( ( { testError, testName, testVar } ) => {
+									it( testName, async () => {
+										const args = {
+											err  : testError,
+											arg1 : testVar,
+										}
+										await generateFailTest( contract.setSaleState, args )
+									})
 								})
 							}
 						})

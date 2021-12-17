@@ -20,7 +20,8 @@ const THROW = {
 	OVERFLOW                 : /overflow/,
 	UNDERFLOW                : /underflow/,
 	OUT_OF_GAS               : /out of gas/,
-	STRING_ARRAY             : /str.charCodeAt is not a function/,
+	STRING_ARRAY             : /charCodeAt is not a function/,
+	VALUE_OUT_OF_BOUNDS      : /value out-of-bounds/,
 }
 
 // For constant test variables
@@ -352,6 +353,46 @@ const uintCases = varName => {
 	]
 }
 
+const enumCases = varName => {
+	return [
+		{
+			testError : THROW.VALUE_OUT_OF_BOUNDS,
+			testName  : 'Input address instead of `' + varName + '` should throw "' + THROW.VALUE_OUT_OF_BOUNDS + '"',
+			testVar   : TEST_VAR.ADDRESS,
+		},
+		{
+			testError : THROW.VALUE_OUT_OF_BOUNDS,
+			testName  : 'Input bytes4 instead of `' + varName + '` should throw "' + THROW.VALUE_OUT_OF_BOUNDS + '"',
+			testVar   : TEST_VAR.BYTES4,
+		},
+		{
+			testError : THROW.VALUE_OUT_OF_BOUNDS,
+			testName  : 'Input bytes32 instead of `' + varName + '` should throw "' + THROW.VALUE_OUT_OF_BOUNDS + '"',
+			testVar   : TEST_VAR.BYTES32,
+		},
+		{
+			testError : THROW.INVALID_BIG_NUMBER_VALUE,
+			testName  : 'Input booldean instead of `' + varName + '` should throw "' + THROW.INVALID_BIG_NUMBER_VALUE + '"',
+			testVar   : TEST_VAR.BOOLEAN,
+		},
+		{
+			testError : THROW.INVALID_BIG_NUMBER_STR,
+			testName  : 'Input string instead of `' + varName + '` should throw "' + THROW.INVALID_BIG_NUMBER_STR + '"',
+			testVar   : TEST_VAR.STRING,
+		},
+		{
+			testError : THROW.INVALID_BIG_NUMBER_VALUE,
+			testName  : 'Input array of number instead of `' + varName + '` should throw "' + THROW.INVALID_BIG_NUMBER_VALUE + '"',
+			testVar   : [ TEST_VAR.NUMBER ],
+		},
+		{
+			testError : THROW.VALUE_OUT_OF_BOUNDS,
+			testName  : 'Input BigNumber instead of `' + varName + '` should throw "' + THROW.VALUE_OUT_OF_BOUNDS + '"',
+			testVar   : [ TEST_VAR.BIG_NUMBER ],
+		},
+	]
+}
+
 const generateFailTest = async ( testedFunc, args = null ) => {
 	const numArgs = args?.length || 0
 
@@ -468,5 +509,6 @@ module.exports = {
 	booleanCases,
 	stringCases,
 	uintCases,
+	enumCases,
 	generateFailTest,
 }

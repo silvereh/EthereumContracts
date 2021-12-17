@@ -218,11 +218,11 @@ describe( TEST.NAME, () => {
 							if ( TEST.METHODS.transferOwnership ) {
 								const arg1Tests = addressCases( 'newOwner_' )
 
-								it( 'Input less than  argument should throw "' + THROW.MISSING_ARGUMENT + '"', async () => {
+								it( 'Input less than 1 argument should throw "' + THROW.MISSING_ARGUMENT + '"', async () => {
 									await generateFailTest( contract.transferOwnership )
 								})
 
-								it( 'Input more than  argument should throw "' + THROW.UNEXPECTED_ARGUMENT + '"', async () => {
+								it( 'Input more than 1 argument should throw "' + THROW.UNEXPECTED_ARGUMENT + '"', async () => {
 									const args = {
 										err  : THROW.UNEXPECTED_ARGUMENT,
 										arg1 : token_owner_address,
