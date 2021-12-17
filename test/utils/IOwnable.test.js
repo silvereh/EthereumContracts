@@ -6,11 +6,11 @@ chai.use( chaiAsPromised )
 const expect = chai.expect ;
 const { ethers } = require( 'hardhat' )
 
-const { generateFailTest, addressCases } = require( './test-module' )
+const { generateFailTest, addressCases } = require( '../test-module' )
 
 // For activating or de-activating test cases
 const TEST = {
-	NAME : 'ITradable',
+	NAME : 'IOwnable',
 	CONTRACT : true,
 	USE_CASES : {
 		READING     : true,
@@ -18,19 +18,23 @@ const TEST = {
 		WRONG_INPUT : true,
 	},
 	EVENTS : {
+		OwnershipTransferred : true,
 	},
 	METHODS : {
-		isRegisteredProxy : true,
+		owner             : true,
+		transferOwnership : true,
 	},
 }
 
 // For contract data
 const CONTRACT = {
-	NAME : 'MockITradable',
+	NAME : 'MockIOwnable',
 	EVENTS : {
+		OwnershipTransferred : 'OwnershipTransferred(address,address)',
 	},
 	METHODS : {
-		isRegisteredProxy : 'isRegisteredProxy(address,address)',
+		owner             : 'owner()',
+		transferOwnership : 'transferOwnership(address)',
 	},
 	PARAMS : {
 	},
@@ -38,6 +42,7 @@ const CONTRACT = {
 
 // For expected reverted errors
 const ERROR = {
+	IOwnable_NOT_OWNER : 'IOwnable_NOT_OWNER',
 }
 
 // For expected thrown errors
@@ -110,10 +115,6 @@ describe( TEST.NAME, () => {
 		let contract_address
 		let contract_artifact
 
-		let proxy
-		let proxy_address
-		let proxy_artifact
-
 		before( async () => {
 			[
 				contract_deployer,
@@ -134,18 +135,12 @@ describe( TEST.NAME, () => {
 			user1_address = user1.address
 			user2_address = user2.address
 
-			proxy_artifact = await ethers.getContractFactory( 'MockProxyRegistry' )
-			proxy = await proxy_artifact.deploy()
-			await proxy.deployed()
-			proxy_address = proxy.address
-			await proxy.setProxy( token_owner_address, proxy_user_address )
-
 			contract_artifact = await ethers.getContractFactory( CONTRACT.NAME )
 		})
 
 		beforeEach( async () => {
 			contract = await contract_artifact.deploy(
-				proxy_address
+				// contract constructor parameters
 			)
 			await contract.deployed()
 			contract_address = contract.address
@@ -153,14 +148,10 @@ describe( TEST.NAME, () => {
 
 		describe( 'Reading ...', () => {
 			if ( TEST.USE_CASES.READING ) {
-				describe( CONTRACT.METHODS.isRegisteredProxy, () => {
-					if ( TEST.METHODS.isRegisteredProxy ) {
-						it( proxy_user_name + ' is a registered proxy for ' + token_owner_name, async () => {
-							expect( await contract.isRegisteredProxy( token_owner_address, proxy_user_address ) ).to.be.true
-						})
-
-						it( proxy_user_name + ' is not a registerd proxy for ' + contract_deployer_name, async () => {
-							expect( await contract.isRegisteredProxy( contract_deployer_address, proxy_user_address ) ).to.be.false
+				describe( CONTRACT.METHODS.owner, () => {
+					if ( TEST.METHODS.owner ) {
+						it( 'Contract owner should be ' + contract_deployer_name, async () => {
+							expect( await contract.owner() ).to.equal( contract_deployer_address )
 						})
 					}
 				})
@@ -169,7 +160,41 @@ describe( TEST.NAME, () => {
 
 		describe( 'Writing ...', () => {
 			if ( TEST.USE_CASES.WRITING ) {
-				// No writing use case for this contract
+				describe( CONTRACT.METHODS.transferOwnership, () => {
+					if ( TEST.METHODS.transferOwnership ) {
+						it( 'Regular user trying to transfer contract ownership should be reverted with ' + ERROR.IOwnable_NOT_OWNER, async () => {
+							await expect( contract.connect( user1 ).transferOwnership( user1_address ) ).to.be.revertedWith( ERROR.IOwnable_NOT_OWNER )
+						})
+
+						describe( 'Contract owner trying to transfer ownership', () => {
+							describe( 'To another user', () => {
+								if ( TEST.EVENTS.OwnershipTransferred ) {
+									it( 'Contract should emit an "' + CONTRACT.EVENTS.OwnershipTransferred + '" event mentioning that ' + user1_name + ' is now the owner of the contract', async () => {
+										await expect( contract.connect( contract_deployer ).transferOwnership( user1_address ) ).to.emit( contract, CONTRACT.EVENTS.OwnershipTransferred ).withArgs( contract_deployer_address, user1_address )
+									})
+								}
+
+								it( 'Contract owner should now be User1', async () => {
+									await contract.connect( contract_deployer ).transferOwnership( user1_address )
+									expect( await contract.owner() ).to.equal( user1_address )
+								})
+							})
+
+							describe( 'To null address', () => {
+								if ( TEST.EVENTS.OwnershipTransferred ) {
+									it( 'Contract should emit an "' + CONTRACT.EVENTS.OwnershipTransferred + '" event mentioning that ' + CST.ADDRESS_ZERO + ' is now the owner of the contract', async () => {
+										await expect( contract.connect( contract_deployer ).transferOwnership( CST.ADDRESS_ZERO ) ).to.emit( contract, CONTRACT.EVENTS.OwnershipTransferred ).withArgs( contract_deployer_address, CST.ADDRESS_ZERO )
+									})
+								}
+
+								it( 'Contract owner should now be ' + CST.ADDRESS_ZERO, async () => {
+									await contract.connect( contract_deployer ).transferOwnership( CST.ADDRESS_ZERO )
+									expect( await contract.owner() ).to.equal( CST.ADDRESS_ZERO )
+								})
+							})
+						})
+					}
+				})
 			}
 		})
 
@@ -177,45 +202,10 @@ describe( TEST.NAME, () => {
 			if ( TEST.USE_CASES.WRONG_INPUT ) {
 				describe( 'Reading ...', () => {
 					if ( TEST.USE_CASES.READING ) {
-						describe( CONTRACT.METHODS.isRegisteredProxy, () => {
-							if ( TEST.METHODS.isRegisteredProxy ) {
-								const arg1Tests = addressCases( 'tokenOwner_' )
-								const arg2Tests = addressCases( 'operator_' )
-
-								it( 'Input less than 2 argument should throw "' + THROW.MISSING_ARGUMENT + '"', async () => {
-									await generateFailTest( contract.isRegisteredProxy )
-								})
-
-								it( 'Input more than 2 argument should throw "' + THROW.UNEXPECTED_ARGUMENT + '"', async () => {
-									const args = {
-										err  : THROW.UNEXPECTED_ARGUMENT,
-										arg1 : token_owner_address,
-										arg2 : proxy_user_address,
-										arg3 : 1,
-									}
-									await generateFailTest( contract.isRegisteredProxy, args )
-								})
-
-								arg1Tests.forEach( ( { testError, testName, testVar } ) => {
-									it( testName, async () => {
-										const args = {
-											err  : testError,
-											arg1 : testVar,
-											arg2 : proxy_user_address,
-										}
-										await generateFailTest( contract.isRegisteredProxy, args )
-									})
-								})
-
-								arg2Tests.forEach( ( { testError, testName, testVar } ) => {
-									it( testName, async () => {
-										const args = {
-											err  : testError,
-											arg1 : token_owner_address,
-											arg2 : testVar,
-										}
-										await generateFailTest( contract.isRegisteredProxy, args )
-									})
+						describe( CONTRACT.METHODS.owner, () => {
+							if ( TEST.METHODS.owner ) {
+								it( 'Input more than 0 argument should throw "' + THROW.UNEXPECTED_ARGUMENT + '"', async () => {
+									await expect( contract.owner( contract_deployer_address ) ).to.be.rejectedWith( THROW.UNEXPECTED_ARGUMENT )
 								})
 							}
 						})
@@ -224,7 +214,34 @@ describe( TEST.NAME, () => {
 
 				describe( 'Writing ...', () => {
 					if ( TEST.USE_CASES.WRITING ) {
-						// No writing use case for this contract
+						describe( CONTRACT.METHODS.transferOwnership, () => {
+							if ( TEST.METHODS.transferOwnership ) {
+								const arg1Tests = addressCases( 'newOwner_' )
+
+								it( 'Input less than 1 argument should throw "' + THROW.MISSING_ARGUMENT + '"', async () => {
+									await generateFailTest( contract.transferOwnership )
+								})
+
+								it( 'Input more than 1 argument should throw "' + THROW.UNEXPECTED_ARGUMENT + '"', async () => {
+									const args = {
+										err  : THROW.UNEXPECTED_ARGUMENT,
+										arg1 : token_owner_address,
+										arg2 : 1,
+									}
+									await generateFailTest( contract.transferOwnership, args )
+								})
+
+								arg1Tests.forEach( ( { testError, testName, testVar } ) => {
+									it( testName, async () => {
+										const args = {
+											err  : testError,
+											arg1 : testVar,
+										}
+										await generateFailTest( contract.transferOwnership, args )
+									})
+								})
+							}
+						})
 					}
 				})
 			}

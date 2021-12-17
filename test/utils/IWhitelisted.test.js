@@ -12,7 +12,7 @@ const {
 	bytes32Cases,
 	booleanCases,
 	uintCases
-} = require( './test-module' )
+} = require( '../test-module' )
 
 // For activating or de-activating test cases
 const TEST = {

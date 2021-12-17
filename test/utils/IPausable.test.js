@@ -6,7 +6,7 @@ chai.use( chaiAsPromised )
 const expect = chai.expect ;
 const { ethers } = require( 'hardhat' )
 
-const { generateFailTest, enumCases } = require( './test-module' )
+const { generateFailTest, enumCases } = require( '../test-module' )
 
 // For activating or de-activating test cases
 const TEST = {
