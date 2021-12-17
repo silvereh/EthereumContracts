@@ -226,7 +226,7 @@ describe( TEST.NAME, () => {
 									const args = {
 										err  : THROW.UNEXPECTED_ARGUMENT,
 										arg1 : token_owner_address,
-										arg3 : 1,
+										arg2 : 1,
 									}
 									await generateFailTest( contract.transferOwnership, args )
 								})

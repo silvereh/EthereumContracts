@@ -29,7 +29,7 @@ const TEST_VAR = {
 	ADDRESS      : '0x6A740a382dAd40a4713651B7B76b08C1Acc32b5e',
 	BYTES4       : ethers.BigNumber.from( '0x01ffc9a7' ).toHexString(),
 	BYTES32      : ethers.BigNumber.from( ethers.utils.keccak256( '0x6A740a382dAd40a4713651B7B76b08C1Acc32b5e' ) ).toHexString(),
-	BYTES_ARRAY  : ethers.utils.randomBytes( 16 ),
+	BYTES_ARRAY  : ethers.utils.randomBytes( 64 ),
 	BOOLEAN      : true,
 	STRING       : 'hello',
 	EMPTY_STRING : '',
@@ -424,6 +424,12 @@ const generateFailTest = async ( testedFunc, args = null ) => {
 		case 8:
 			await generateFailTest7( testedFunc, args )
 			break;
+		case 9:
+			await generateFailTest8( testedFunc, args )
+			break;
+		case 10:
+			await generateFailTest9( testedFunc, args )
+			break;
 		default:
 			return;
 	}
@@ -498,6 +504,24 @@ const generateFailTest7 = async ( testedFunc, args ) => {
 	}
 	else {
 		expect( await testedFunc( args.arg1, args.arg2, args.arg3, args.arg4, args.arg5, args.arg6, args.arg7 ) )?.not.to.throw
+	}
+}
+
+const generateFailTest8 = async ( testedFunc, args ) => {
+	if ( args?.err ) {
+		await expect( testedFunc( args.arg1, args.arg2, args.arg3, args.arg4, args.arg5, args.arg6, args.arg7, args.arg8 ) )?.to.be.rejectedWith( args.err )
+	}
+	else {
+		expect( await testedFunc( args.arg1, args.arg2, args.arg3, args.arg4, args.arg5, args.arg6, args.arg7, args.arg8 ) )?.not.to.throw
+	}
+}
+
+const generateFailTest9 = async ( testedFunc, args ) => {
+	if ( args?.err ) {
+		await expect( testedFunc( args.arg1, args.arg2, args.arg3, args.arg4, args.arg5, args.arg6, args.arg7, args.arg8, args.arg9 ) )?.to.be.rejectedWith( args.err )
+	}
+	else {
+		expect( await testedFunc( args.arg1, args.arg2, args.arg3, args.arg4, args.arg5, args.arg6, args.arg7, args.arg8, args.arg9 ) )?.not.to.throw
 	}
 }
 
