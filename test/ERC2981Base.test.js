@@ -6,6 +6,8 @@ chai.use( chaiAsPromised )
 const expect = chai.expect ;
 const { ethers } = require( 'hardhat' )
 
+const { generateFailTest, addressCases, uintCases, bytes4Cases } = require( './test-module' )
+
 // For activating or de-activating test cases
 const TEST = {
 	NAME : 'ERC2981Base',
@@ -242,104 +244,72 @@ describe( TEST.NAME, () => {
 					if ( TEST.USE_CASE.READING ) {
 						describe( CONTRACT.METHODS.royaltyInfo, () => {
 							if ( TEST.METHODS.royaltyInfo ) {
+								const arg1Tests = uintCases( 'tokenId_' )
+								const arg2Tests = uintCases( 'salePrice_' )
+
 								it( 'Input less than 2 argument should throw "' + THROW.MISSING_ARGUMENT + '"', async () => {
-									await expect( contract.royaltyInfo() ).to.be.rejectedWith( THROW.MISSING_ARGUMENT )
+									await generateFailTest( contract.royaltyInfo )
 								})
 
 								it( 'Input more than 2 argument should throw "' + THROW.UNEXPECTED_ARGUMENT + '"', async () => {
-									await expect( contract.royaltyInfo( 0, CST.ONE_ETH, 1 ) ).to.be.rejectedWith( THROW.UNEXPECTED_ARGUMENT )
+									const args = {
+										err  : THROW.UNEXPECTED_ARGUMENT,
+										arg1 : 0,
+										arg2 : CST.ONE_ETH,
+										arg3 : 1,
+									}
+									await generateFailTest( contract.royaltyInfo, args )
 								})
 
-								it( 'Input address instead of `tokenId_` should be converted to a number and return a result', async () => {
-									expect( await contract.royaltyInfo( contract_deployer_address, CST.ONE_ETH ) ).to.exist
+								arg1Tests.forEach( ( { testError, testName, testVar } ) => {
+									it( testName, async () => {
+										const args = {
+											err  : testError,
+											arg1 : testVar,
+											arg2 : CST.ONE_ETH,
+										}
+										await generateFailTest( contract.royaltyInfo, args )
+									})
 								})
 
-								it( 'Input bytes4 instead of `tokenId_` should be converted to a number and return a result', async () => {
-									expect( await contract.royaltyInfo( CST.INTERFACE_ID.IERC721, CST.ONE_ETH ) ).to.exist
-								})
-
-								it( 'Input booldean instead of `tokenId_` should throw "' + THROW.INVALID_BIG_NUMBER_VALUE + '"', async () => {
-									await expect( contract.royaltyInfo( true, CST.ONE_ETH ) ).to.be.rejectedWith( THROW.INVALID_BIG_NUMBER_VALUE )
-								})
-
-								it( 'Input object instead of `tokenId_` should throw "' + THROW.INVALID_BIG_NUMBER_VALUE + '"', async () => {
-									await expect( contract.royaltyInfo( { "tokenId_": 0 }, CST.ONE_ETH ) ).to.be.rejectedWith( THROW.INVALID_BIG_NUMBER_VALUE )
-								})
-
-								it( 'Input string instead of `tokenId_` should throw "' + THROW.INVALID_BIG_NUMBER_STR + '"', async () => {
-									await expect( contract.royaltyInfo( 'hello', CST.ONE_ETH ) ).to.be.rejectedWith( THROW.INVALID_BIG_NUMBER_STR )
-								})
-
-								it( 'Input address cast as BigNumber instead of `tokenId_` should be converted to a number and return a result', async () => {
-									expect( await contract.royaltyInfo( ethers.BigNumber.from( contract_deployer_address ), CST.ONE_ETH ) ).to.exist
-								})
-
-								it( 'Input address instead of `salePrice_` should be converted to a number and return a result', async () => {
-									expect( await contract.royaltyInfo( 0, contract_deployer_address ) ).to.exist
-								})
-
-								it( 'Input bytes4 instead of `salePrice_` should be converted to a number and return a result', async () => {
-									expect( await contract.royaltyInfo( 0, CST.INTERFACE_ID.IERC721 ) ).to.exist
-								})
-
-								it( 'Input booldean instead of `salePrice_` should throw "' + THROW.INVALID_BIG_NUMBER_VALUE + '"', async () => {
-									await expect( contract.royaltyInfo( 0, true ) ).to.be.rejectedWith( THROW.INVALID_BIG_NUMBER_VALUE )
-								})
-
-								it( 'Input object instead of `salePrice_` should throw "' + THROW.INVALID_BIG_NUMBER_VALUE + '"', async () => {
-									await expect( contract.royaltyInfo( 0, { "tokenId_": 0 } ) ).to.be.rejectedWith( THROW.INVALID_BIG_NUMBER_VALUE )
-								})
-
-								it( 'Input string instead of `salePrice_` should throw "' + THROW.INVALID_BIG_NUMBER_STR + '"', async () => {
-									await expect( contract.royaltyInfo( 0, 'hello' ) ).to.be.rejectedWith( THROW.INVALID_BIG_NUMBER_STR )
-								})
-
-								it( 'Input address cast as BigNumber instead of `salePrice_` should be converted to a number and return a result', async () => {
-									expect( await contract.royaltyInfo( 0, ethers.BigNumber.from( contract_deployer_address ) ) ).to.exist
+								arg2Tests.forEach( ( { testError, testName, testVar } ) => {
+									it( testName, async () => {
+										const args = {
+											err  : testError,
+											arg1 : 0,
+											arg2 : testVar,
+										}
+										await generateFailTest( contract.royaltyInfo, args )
+									})
 								})
 							}
 						})
 
 						describe( CONTRACT.METHODS.supportsInterface, () => {
 							if ( TEST.METHODS.supportsInterface ) {
+								const arg1Tests = bytes4Cases( 'interfaceId_' )
+
 								it( 'Input less than 1 argument should throw "' + THROW.MISSING_ARGUMENT + '"', async () => {
-									await expect( contract.supportsInterface() ).to.be.rejectedWith( THROW.MISSING_ARGUMENT )
+									await generateFailTest( contract.supportsInterface )
 								})
 
 								it( 'Input more than 1 argument should throw "' + THROW.UNEXPECTED_ARGUMENT + '"', async () => {
-									await expect( contract.supportsInterface( 0, 1 ) ).to.be.rejectedWith( THROW.UNEXPECTED_ARGUMENT )
+									const args = {
+										err  : THROW.UNEXPECTED_ARGUMENT,
+										arg1 : CST.INTERFACE_ID.IERC165,
+										arg2 : 1,
+									}
+									await generateFailTest( contract.supportsInterface, args )
 								})
 
-								it( 'Input array of bytes4 should throw "' + THROW.INVALID_ARRAYIFY_VALUE + '"', async () => {
-									await expect( contract.supportsInterface( [ CST.INTERFACE_ID.IERC721 ] ) ).to.be.rejectedWith( THROW.INVALID_ARRAYIFY_VALUE )
-								})
-
-								it( 'Input address instead of `interfaceId_` should throw "' + THROW.INCORRECT_DATA_LENGTH + '"', async () => {
-									await expect( contract.supportsInterface( contract_deployer_address ) ).to.be.rejectedWith( THROW.INCORRECT_DATA_LENGTH )
-								})
-
-								it( 'Input booldean instead of `interfaceId_` should throw "' + THROW.INVALID_ARRAYIFY_VALUE + '"', async () => {
-									await expect( contract.supportsInterface( true ) ).to.be.rejectedWith( THROW.INVALID_ARRAYIFY_VALUE )
-								})
-
-								it( 'Input object instead of `interfaceId_` should throw "' + THROW.INVALID_ARRAYIFY_VALUE + '"', async () => {
-									await expect( contract.supportsInterface( { "rofl": 0 } ) ).to.be.rejectedWith( THROW.INVALID_ARRAYIFY_VALUE )
-								})
-
-								it( 'Input string instead of `interfaceId_` should throw "' + THROW.INVALID_ARRAYIFY_VALUE + '"', async () => {
-									await expect( contract.supportsInterface( 'hello' ) ).to.be.rejectedWith( THROW.INVALID_ARRAYIFY_VALUE )
-								})
-
-								it( 'Input address cast as BigNumber instead of `interfaceId_` should throw "' + THROW.INCORRECT_DATA_LENGTH + '"', async () => {
-									await expect( contract.supportsInterface( ethers.BigNumber.from( contract_deployer_address ) ) ).to.be.rejectedWith( THROW.INCORRECT_DATA_LENGTH )
-								})
-
-								it( 'Input number instead of `interfaceId_` should throw "' + THROW.INCORRECT_DATA_LENGTH + '"', async () => {
-									await expect( contract.supportsInterface( 1 ) ).to.be.rejectedWith( THROW.INCORRECT_DATA_LENGTH )
-								})
-
-								it( 'Input BigNumber instead of `interfaceId_` should throw "' + THROW.INCORRECT_DATA_LENGTH + '"', async () => {
-									await expect( contract.supportsInterface( CST.ONE_ETH ) ).to.be.rejectedWith( THROW.INCORRECT_DATA_LENGTH )
+								arg1Tests.forEach( ( { testError, testName, testVar } ) => {
+									it( testName, async () => {
+										const args = {
+											err  : testError,
+											arg1 : testVar,
+										}
+										await generateFailTest( contract.supportsInterface, args )
+									})
 								})
 							}
 						})
@@ -350,68 +320,43 @@ describe( TEST.NAME, () => {
 					if ( TEST.USE_CASE.WRITING ) {
 						describe( CONTRACT.METHODS.setRoyaltyInfo, () => {
 							if ( TEST.METHODS.setRoyaltyInfo ) {
+								const arg1Tests = addressCases( 'recipient_' )
+								const arg2Tests = uintCases( 'rate_' )
+
 								it( 'Input less than 2 argument should throw "' + THROW.MISSING_ARGUMENT + '"', async () => {
-									await expect( contract.setRoyaltyInfo() ).to.be.rejectedWith( THROW.MISSING_ARGUMENT )
+									await generateFailTest( contract.royaltyInfo )
 								})
 
 								it( 'Input more than 2 argument should throw "' + THROW.UNEXPECTED_ARGUMENT + '"', async () => {
-									await expect( contract.setRoyaltyInfo( user1_address, 50, 1 ) ).to.be.rejectedWith( THROW.UNEXPECTED_ARGUMENT )
+									const args = {
+										err  : THROW.UNEXPECTED_ARGUMENT,
+										arg1 : contract_deployer_address,
+										arg2 : CONTRACT.PARAMS.ROYALTY_RATE,
+										arg3 : 1,
+									}
+									await generateFailTest( contract.royaltyInfo, args )
 								})
 
-								it( 'Input array of address should throw "' + THROW.INVALID_ADDRESS_OR_ENS + '"', async () => {
-									await expect( contract.setRoyaltyInfo( [ user1_address ], 50 ) ).to.be.rejectedWith( THROW.INVALID_ADDRESS_OR_ENS )
+								arg1Tests.forEach( ( { testError, testName, testVar } ) => {
+									it( testName, async () => {
+										const args = {
+											err  : testError,
+											arg1 : testVar,
+											arg2 : CONTRACT.PARAMS.ROYALTY_RATE,
+										}
+										await generateFailTest( contract.royaltyInfo, args )
+									})
 								})
 
-								it( 'Input bytes4 instead of `recipient_` should throw "' + THROW.INVALID_ADDRESS + '"', async () => {
-									await expect( contract.setRoyaltyInfo( CST.INTERFACE_ID.IERC721, 50 ) ).to.be.rejectedWith( THROW.INVALID_ADDRESS )
-								})
-
-								it( 'Input booldean instead of `recipient_` should throw "' + THROW.INVALID_ADDRESS_OR_ENS + '"', async () => {
-									await expect( contract.setRoyaltyInfo( true, 50 ) ).to.be.rejectedWith( THROW.INVALID_ADDRESS_OR_ENS )
-								})
-
-								it( 'Input object instead of `recipient_` should throw "' + THROW.INVALID_ADDRESS_OR_ENS + '"', async () => {
-									await expect( contract.setRoyaltyInfo( { "tokenOwner_": user1_address }, 50 ) ).to.be.rejectedWith( THROW.INVALID_ADDRESS_OR_ENS )
-								})
-
-								it( 'Input string instead of `recipient_` should throw "' + THROW.INVALID_ADDRESS_STR + '"', async () => {
-									await expect( contract.setRoyaltyInfo( 'hello', 50 ) ).to.be.rejectedWith( THROW.INVALID_ADDRESS_STR )
-								})
-
-								it( 'Input `recipient_` cast as BigNumber should throw "' + THROW.INVALID_ADDRESS_OR_ENS + '"', async () => {
-									await expect( contract.setRoyaltyInfo( ethers.BigNumber.from( user1_address ), 50 ) ).to.be.rejectedWith( THROW.INVALID_ADDRESS_OR_ENS )
-								})
-
-								it( 'Input number instead of `recipient_` should throw "' + THROW.INVALID_ADDRESS_OR_ENS + '"', async () => {
-									await expect( contract.setRoyaltyInfo( 1, 50 ) ).to.be.rejectedWith( THROW.INVALID_ADDRESS_OR_ENS )
-								})
-
-								it( 'Input BigNumber instead of `recipient_` should throw "' + THROW.INVALID_ADDRESS_OR_ENS + '"', async () => {
-									await expect( contract.setRoyaltyInfo( CONTRACT.TOKEN_PRICE, 50 ) ).to.be.rejectedWith( THROW.INVALID_ADDRESS_OR_ENS )
-								})
-
-								it( 'Input address instead of `rate_` should be reverted with ' + ERROR.IERC2981_INVALID_ROYALTIES, async () => {
-									await expect( contract.setRoyaltyInfo( user1_address, contract_deployer_address ) ).to.be.revertedWith( ERROR.IERC2981_INVALID_ROYALTIES )
-								})
-
-								it( 'Input interface ID instead of `rate_` should be reverted with ' + ERROR.IERC2981_INVALID_ROYALTIES, async () => {
-									await expect( contract.setRoyaltyInfo( user1_address, CST.INTERFACE_ID.IERC721 ) ).to.be.revertedWith( ERROR.IERC2981_INVALID_ROYALTIES )
-								})
-
-								it( 'Input booldean instead of `rate_` should throw "' + THROW.INVALID_BIG_NUMBER_VALUE + '"', async () => {
-									await expect( contract.setRoyaltyInfo( user1_address, true ) ).to.be.rejectedWith( THROW.INVALID_BIG_NUMBER_VALUE )
-								})
-
-								it( 'Input object instead of `rate_` should throw "' + THROW.INVALID_BIG_NUMBER_VALUE + '"', async () => {
-									await expect( contract.setRoyaltyInfo( user1_address, { "rofl": 0 } ) ).to.be.rejectedWith( THROW.INVALID_BIG_NUMBER_VALUE )
-								})
-
-								it( 'Input string instead of `rate_` should throw "' + THROW.INVALID_BIG_NUMBER_STR + '"', async () => {
-									await expect( contract.setRoyaltyInfo( user1_address, 'hello' ) ).to.be.rejectedWith( THROW.INVALID_BIG_NUMBER_STR )
-								})
-
-								it( 'Input address cast as BigNumber instead of `rate_` should be reverted with "' + ERROR.IERC2981_INVALID_ROYALTIES + '"', async () => {
-									await expect( contract.setRoyaltyInfo( user1_address, ethers.BigNumber.from( contract_deployer_address ) ) ).to.be.revertedWith( ERROR.IERC2981_INVALID_ROYALTIES )
+								arg2Tests.forEach( ( { testError, testName, testVar } ) => {
+									it( testName, async () => {
+										const args = {
+											err  : testError,
+											arg1 : contract_deployer_address,
+											arg2 : testVar,
+										}
+										await generateFailTest( contract.royaltyInfo, args )
+									})
 								})
 							}
 						})

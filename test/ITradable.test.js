@@ -6,6 +6,8 @@ chai.use( chaiAsPromised )
 const expect = chai.expect ;
 const { ethers } = require( 'hardhat' )
 
+const { generateFailTest, addressCases } = require( './test-module' )
+
 // For activating or de-activating test cases
 const TEST = {
 	NAME : 'ITradable',
@@ -177,76 +179,43 @@ describe( TEST.NAME, () => {
 					if ( TEST.USE_CASES.READING ) {
 						describe( CONTRACT.METHODS.isRegisteredProxy, () => {
 							if ( TEST.METHODS.isRegisteredProxy ) {
-								it( 'Input less than 2 arguments should throw "' + THROW.MISSING_ARGUMENT + '"', async () => {
-									await expect( contract.isRegisteredProxy() ).to.be.rejectedWith( THROW.MISSING_ARGUMENT )
+								const arg1Tests = addressCases( 'tokenOwner_' )
+								const arg2Tests = addressCases( 'operator_' )
+
+								it( 'Input less than 2 argument should throw "' + THROW.MISSING_ARGUMENT + '"', async () => {
+									await generateFailTest( contract.isRegisteredProxy )
 								})
 
-								it( 'Input more than 2 arguments should throw "' + THROW.UNEXPECTED_ARGUMENT + '"', async () => {
-									await expect( contract.isRegisteredProxy( token_owner_address, proxy_user_address, 1 ) ).to.be.rejectedWith( THROW.UNEXPECTED_ARGUMENT )
+								it( 'Input more than 2 argument should throw "' + THROW.UNEXPECTED_ARGUMENT + '"', async () => {
+									const args = {
+										err  : THROW.UNEXPECTED_ARGUMENT,
+										arg1 : token_owner_address,
+										arg2 : proxy_user_address,
+										arg3 : 1,
+									}
+									await generateFailTest( contract.isRegisteredProxy, args )
 								})
 
-								it( 'Input array of address instead of `tokenOwner_` should throw "' + THROW.INVALID_ADDRESS_OR_ENS + '"', async () => {
-									await expect( contract.isRegisteredProxy( [ token_owner_address ], proxy_user_address ) ).to.be.rejectedWith( THROW.INVALID_ADDRESS_OR_ENS )
+								arg1Tests.forEach( ( { testError, testName, testVar } ) => {
+									it( testName, async () => {
+										const args = {
+											err  : testError,
+											arg1 : testVar,
+											arg2 : proxy_user_address,
+										}
+										await generateFailTest( contract.isRegisteredProxy, args )
+									})
 								})
 
-								it( 'Input interface ID instead of `tokenOwner_` should throw "' + THROW.INVALID_ADDRESS + '"', async () => {
-									await expect( contract.isRegisteredProxy( CST.INTERFACE_ID.IERC721, proxy_user_address ) ).to.be.rejectedWith( THROW.INVALID_ADDRESS )
-								})
-
-								it( 'Input booldean instead of `tokenOwner_` should throw "' + THROW.INVALID_ADDRESS_OR_ENS + '"', async () => {
-									await expect( contract.isRegisteredProxy( true, proxy_user_address ) ).to.be.rejectedWith( THROW.INVALID_ADDRESS_OR_ENS )
-								})
-
-								it( 'Input object instead of `tokenOwner_` should throw "' + THROW.INVALID_ADDRESS_OR_ENS + '"', async () => {
-									await expect( contract.isRegisteredProxy( { "tokenOwner_": token_owner_address }, proxy_user_address ) ).to.be.rejectedWith( THROW.INVALID_ADDRESS_OR_ENS )
-								})
-
-								it( 'Input string instead of `tokenOwner_` should throw "' + THROW.INVALID_ADDRESS_STR + '"', async () => {
-									await expect( contract.isRegisteredProxy( 'hello', proxy_user_address ) ).to.be.rejectedWith( THROW.INVALID_ADDRESS_STR )
-								})
-
-								it( 'Input `tokenOwner_` cast as BigNumber should throw "' + THROW.INVALID_ADDRESS_OR_ENS + '"', async () => {
-									await expect( contract.isRegisteredProxy( ethers.BigNumber.from( token_owner_address ), proxy_user_address ) ).to.be.rejectedWith( THROW.INVALID_ADDRESS_OR_ENS )
-								})
-
-								it( 'Input number instead of `tokenOwner_` should throw "' + THROW.INVALID_ADDRESS_OR_ENS + '"', async () => {
-									await expect( contract.isRegisteredProxy( 1, proxy_user_address ) ).to.be.rejectedWith( THROW.INVALID_ADDRESS_OR_ENS )
-								})
-
-								it( 'Input BigNumber instead of `tokenOwner_` should throw "' + THROW.INVALID_ADDRESS_OR_ENS + '"', async () => {
-									await expect( contract.isRegisteredProxy( CONTRACT.PARAMS.TOKEN_PRICE, proxy_user_address ) ).to.be.rejectedWith( THROW.INVALID_ADDRESS_OR_ENS )
-								})
-
-								it( 'Input array of address instead of `operator_` should throw "' + THROW.INVALID_ADDRESS_OR_ENS + '"', async () => {
-									await expect( contract.isRegisteredProxy( token_owner_address, [ proxy_user_address ] ) ).to.be.rejectedWith( THROW.INVALID_ADDRESS_OR_ENS )
-								})
-
-								it( 'Input interface ID instead of `operator_` should throw "' + THROW.INVALID_ADDRESS + '"', async () => {
-									await expect( contract.isRegisteredProxy( token_owner_address, CST.INTERFACE_ID.IERC721 ) ).to.be.rejectedWith( THROW.INVALID_ADDRESS )
-								})
-
-								it( 'Input booldean instead of `operator_` should throw "' + THROW.INVALID_ADDRESS_OR_ENS + '"', async () => {
-									await expect( contract.isRegisteredProxy( token_owner_address, true ) ).to.be.rejectedWith( THROW.INVALID_ADDRESS_OR_ENS )
-								})
-
-								it( 'Input object instead of `operator_` should throw "' + THROW.INVALID_ADDRESS_OR_ENS + '"', async () => {
-									await expect( contract.isRegisteredProxy( token_owner_address, { "operator_": proxy_user_address } ) ).to.be.rejectedWith( THROW.INVALID_ADDRESS_OR_ENS )
-								})
-
-								it( 'Input string instead of `operator_` should throw "' + THROW.INVALID_ADDRESS_STR + '"', async () => {
-									await expect( contract.isRegisteredProxy( token_owner_address, 'hello' ) ).to.be.rejectedWith( THROW.INVALID_ADDRESS_STR )
-								})
-
-								it( 'Input `operator_` cast as BigNumber should throw "' + THROW.INVALID_ADDRESS_OR_ENS + '"', async () => {
-									await expect( contract.isRegisteredProxy( token_owner_address, ethers.BigNumber.from( proxy_user_address ) ) ).to.be.rejectedWith( THROW.INVALID_ADDRESS_OR_ENS )
-								})
-
-								it( 'Input number instead of `operator_` should throw "' + THROW.INVALID_ADDRESS_OR_ENS + '"', async () => {
-									await expect( contract.isRegisteredProxy( token_owner_address, 1 ) ).to.be.rejectedWith( THROW.INVALID_ADDRESS_OR_ENS )
-								})
-
-								it( 'Input BigNumber instead of `operator_` should throw "' + THROW.INVALID_ADDRESS_OR_ENS + '"', async () => {
-									await expect( contract.isRegisteredProxy( token_owner_address, CONTRACT.PARAMS.TOKEN_PRICE ) ).to.be.rejectedWith( THROW.INVALID_ADDRESS_OR_ENS )
+								arg2Tests.forEach( ( { testError, testName, testVar } ) => {
+									it( testName, async () => {
+										const args = {
+											err  : testError,
+											arg1 : token_owner_address,
+											arg2 : testVar,
+										}
+										await generateFailTest( contract.isRegisteredProxy, args )
+									})
 								})
 							}
 						})

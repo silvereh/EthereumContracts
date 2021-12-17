@@ -6,6 +6,8 @@ chai.use( chaiAsPromised )
 const expect = chai.expect ;
 const { ethers } = require( 'hardhat' )
 
+const { generateFailTest, addressCases } = require( './test-module' )
+
 // For activating or de-activating test cases
 const TEST = {
 	NAME : 'IOwnable',
@@ -214,44 +216,29 @@ describe( TEST.NAME, () => {
 					if ( TEST.USE_CASES.WRITING ) {
 						describe( CONTRACT.METHODS.transferOwnership, () => {
 							if ( TEST.METHODS.transferOwnership ) {
-								it( 'Input less than 1 argument should throw "' + THROW.MISSING_ARGUMENT + '"', async () => {
-									await expect( contract.connect( contract_deployer ).transferOwnership() ).to.be.rejectedWith( THROW.MISSING_ARGUMENT )
+								const arg1Tests = addressCases( 'newOwner_' )
+
+								it( 'Input less than  argument should throw "' + THROW.MISSING_ARGUMENT + '"', async () => {
+									await generateFailTest( contract.transferOwnership )
 								})
 
-								it( 'Input more than 1 argument should throw "' + THROW.UNEXPECTED_ARGUMENT + '"', async () => {
-									await expect( contract.connect( contract_deployer ).transferOwnership( user1_address, 1 ) ).to.be.rejectedWith( THROW.UNEXPECTED_ARGUMENT )
+								it( 'Input more than  argument should throw "' + THROW.UNEXPECTED_ARGUMENT + '"', async () => {
+									const args = {
+										err  : THROW.UNEXPECTED_ARGUMENT,
+										arg1 : token_owner_address,
+										arg3 : 1,
+									}
+									await generateFailTest( contract.transferOwnership, args )
 								})
 
-								it( 'Input array of address instead of `newOwner_` should throw "' + THROW.INVALID_ADDRESS_OR_ENS + '"', async () => {
-									await expect( contract.connect( contract_deployer ).transferOwnership( [ token_owner_address ] ) ).to.be.rejectedWith( THROW.INVALID_ADDRESS_OR_ENS )
-								})
-
-								it( 'Input interface ID instead of `newOwner_` should throw "' + THROW.INVALID_ADDRESS + '"', async () => {
-									await expect( contract.connect( contract_deployer ).transferOwnership( CST.INTERFACE_ID.IERC721 ) ).to.be.rejectedWith( THROW.INVALID_ADDRESS )
-								})
-
-								it( 'Input booldean instead of `newOwner_` should throw "' + THROW.INVALID_ADDRESS_OR_ENS + '"', async () => {
-									await expect( contract.connect( contract_deployer ).transferOwnership( true ) ).to.be.rejectedWith( THROW.INVALID_ADDRESS_OR_ENS )
-								})
-
-								it( 'Input object instead of `newOwner_` should throw "' + THROW.INVALID_ADDRESS_OR_ENS + '"', async () => {
-									await expect( contract.connect( contract_deployer ).transferOwnership( { "tokenOwner_": token_owner_address } ) ).to.be.rejectedWith( THROW.INVALID_ADDRESS_OR_ENS )
-								})
-
-								it( 'Input string instead of `newOwner_` should throw "' + THROW.INVALID_ADDRESS_STR + '"', async () => {
-									await expect( contract.connect( contract_deployer ).transferOwnership( 'hello' ) ).to.be.rejectedWith( THROW.INVALID_ADDRESS_STR )
-								})
-
-								it( 'Input `newOwner_` cast as BigNumber should throw "' + THROW.INVALID_ADDRESS_OR_ENS + '"', async () => {
-									await expect( contract.connect( contract_deployer ).transferOwnership( ethers.BigNumber.from( token_owner_address ) ) ).to.be.rejectedWith( THROW.INVALID_ADDRESS_OR_ENS )
-								})
-
-								it( 'Input number instead of `newOwner_` should throw "' + THROW.INVALID_ADDRESS_OR_ENS + '"', async () => {
-									await expect( contract.connect( contract_deployer ).transferOwnership( 1 ) ).to.be.rejectedWith( THROW.INVALID_ADDRESS_OR_ENS )
-								})
-
-								it( 'Input BigNumber instead of `newOwner_` should throw "' + THROW.INVALID_ADDRESS_OR_ENS + '"', async () => {
-									await expect( contract.connect( contract_deployer ).transferOwnership( CONTRACT.PARAMS.TOKEN_PRICE ) ).to.be.rejectedWith( THROW.INVALID_ADDRESS_OR_ENS )
+								arg1Tests.forEach( ( { testError, testName, testVar } ) => {
+									it( testName, async () => {
+										const args = {
+											err  : testError,
+											arg1 : testVar,
+										}
+										await generateFailTest( contract.transferOwnership, args )
+									})
 								})
 							}
 						})
