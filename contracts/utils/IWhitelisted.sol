@@ -79,7 +79,7 @@ abstract contract IWhitelisted {
 	* 
 	* Note: Before calling this function, eligibility should be checked through {IWhitelisted-checkWhitelistAllowance}.
 	*/
-	function _consumeWhitelist( address account_, uint256 qty_, bytes32 proof_, bool flag_ ) internal {
+	function _consumeWhitelist( address account_, bytes32 proof_, bool flag_, uint256 qty_ ) internal {
 		if ( qty_ > _passMax ) {
 			revert IWhitelisted_FORBIDDEN();
 		}
