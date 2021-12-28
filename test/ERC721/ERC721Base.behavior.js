@@ -6,7 +6,7 @@ chai.use( chaiAsPromised )
 const expect = chai.expect
 const { ethers } = require( 'hardhat' )
 
-const { getTestCasesByFunction, generateFailTest, generateTestCase } = require( '../fail-test-module' )
+const { getTestCasesByFunction, generateTestCase } = require( '../fail-test-module' )
 const { deployContract } = require( '../contract-deployment-module' )
 
 const {

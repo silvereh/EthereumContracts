@@ -7,7 +7,7 @@ const expect = chai.expect
 const { ethers } = require( 'hardhat' )
 
 const { shouldBehaveLikeERC721Base } = require( './ERC721Base.behavior' )
-const { getTestCasesByFunction, generateFailTest, generateTestCase } = require( '../fail-test-module' )
+const { getTestCasesByFunction, generateTestCase } = require( '../fail-test-module' )
 const { deployContract } = require( '../contract-deployment-module' )
 
 const {
