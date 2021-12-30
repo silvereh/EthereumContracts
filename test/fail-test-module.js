@@ -18,6 +18,7 @@ const THROW = {
 	INVALID_BIG_NUMBER_STR   : /invalid BigNumber string/,
 	INVALID_BIG_NUMBER_VALUE : /invalid BigNumber value/,
 	INVALID_ARRAYIFY_VALUE   : /invalid arrayify value/,
+	INVALID_VALUE_FOR_ARRAY  : /invalid value for array/,
 	OVERFLOW                 : /overflow/,
 	UNDERFLOW                : /underflow/,
 	OUT_OF_GAS               : /out of gas/,
@@ -169,7 +170,7 @@ const addressArrayCases = ( varName, index ) => {
 		{
 			test_variable_index : index,
 			test_description    : 'Input single address instead of `' + varName + '` should throw "' + THROW.INVALID_ARRAYIFY_VALUE + '"',
-			expected_error      : THROW.INVALID_ARRAYIFY_VALUE,
+			expected_error      : THROW.INVALID_VALUE_FOR_ARRAY,
 			test_variable       : TEST_VAR.ADDRESS,
 		},
 		{
@@ -205,7 +206,7 @@ const addressArrayCases = ( varName, index ) => {
 		{
 			test_variable_index : index,
 			test_description    : 'Input array of string instead of `' + varName + '` should throw "' + THROW.INVALID_ADDRESS_OR_ENS + '"',
-			expected_error      : THROW.INVALID_ADDRESS_OR_ENS,
+			expected_error      : THROW.INVALID_ADDRESS_STR,
 			test_variable       : [ TEST_VAR.STRING ],
 		},
 		{
@@ -630,19 +631,19 @@ const uint256ArrayCases = ( varName, index ) => {
 		{
 			test_variable_index : index,
 			test_description    : 'Input single number instead of `' + varName + '` should throw "' + THROW.INVALID_ARRAYIFY_VALUE + '"',
-			expected_error      : THROW.INVALID_ARRAYIFY_VALUE,
+			expected_error      : THROW.INVALID_VALUE_FOR_ARRAY,
 			test_variable       : TEST_VAR.NUMBER_ONE,
 		},
 		{
 			test_variable_index : index,
 			test_description    : 'Input array of array of BigNumber instead of `' + varName + '` should resolve to the last BigNumber in the array',
-			expected_error      : null,
+			expected_error      : THROW.INVALID_BIG_NUMBER_VALUE,
 			test_variable       : [ [ TEST_VAR.BIG_NUMBER ] ],
 		},
 		{
 			test_variable_index : index,
 			test_description    : 'Input single BigNumber instead of `' + varName + '` should throw "' + THROW.INVALID_ARRAYIFY_VALUE + '"',
-			expected_error      : THROW.INVALID_ARRAYIFY_VALUE,
+			expected_error      : THROW.INVALID_VALUE_FOR_ARRAY,
 			test_variable       : TEST_VAR.BIG_NUMBER,
 		},
 	]

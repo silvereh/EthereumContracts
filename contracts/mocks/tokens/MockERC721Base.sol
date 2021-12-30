@@ -17,16 +17,11 @@ import "../../tokens/ERC721/ERC721Base.sol";
 * ~ ownerOf() 
 * ~ _exists()
 * ~ _mint()
-* ~ _burn()
 * Note also that the implementations of the function balanceof() are extremely inefficient and as such, 
 * those functions should be avoided inside non-view functions.
 */
 contract MockERC721Base is ERC721Base {
 	constructor() {}
-
-	function supplyMinted() public view returns ( uint256 ) {
-		return _supplyMinted();
-	}
 
 	function mint( address to_ ) public {
 		_safeMint( to_ );

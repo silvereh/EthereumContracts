@@ -6,7 +6,6 @@
 
 pragma solidity 0.8.10;
 
-import '../../interfaces/IERC165.sol';
 import '../../interfaces/IERC721.sol';
 import "../../interfaces/IERC721Receiver.sol";
 
@@ -84,7 +83,7 @@ abstract contract ERC721Base is IERC165, IERC721 {
 			revert IERC721_NULL_ADDRESS_BALANCE();
 		}
 		uint256 _count_ = 0;
-		for ( uint256 i = 0; i < _tokenIds; i++ ) {
+		for ( uint256 i = 0; i < _supplyMinted(); i++ ) {
 			if ( tokenOwner_ == _owners[i] ) {
 				_count_++;
 			}
@@ -264,7 +263,7 @@ abstract contract ERC721Base is IERC165, IERC721 {
 	* forwarded in {IERC721Receiver-onERC721Received} to contract recipients.
 	*/
 	function _safeMint( address to_, bytes memory data_ ) internal virtual {
-		uint256 _tokenId_ = _tokenIds;
+		uint256 _tokenId_ = _supplyMinted();
 		_mint( to_, _tokenId_ );
 		if ( ! _checkOnERC721Received( address( 0 ), to_, _tokenId_, data_ ) ) {
 			revert IERC721_NON_ERC721_RECEIVER();

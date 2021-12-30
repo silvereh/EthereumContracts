@@ -39,7 +39,6 @@ const TEST = {
 		getApproved       : true,
 		setApprovalForAll : true,
 		isApprovedForAll  : true,
-		supplyMinted      : true,
 		mint              : true,
 	},
 	USE_CASES : {
@@ -96,10 +95,6 @@ const CONTRACT = {
 		isApprovedForAll : {
 			SIGNATURE : 'isApprovedForAll(address,address)',
 			PARAMS    : [ 'tokenOwner_', 'operator_' ],
-		},
-		supplyMinted : {
-			SIGNATURE : 'supplyMinted()',
-			PARAMS    : [],
 		},
 		mint : {
 			SIGNATURE : 'mint(address)',
@@ -232,14 +227,6 @@ const shouldBehaveLikeERC721Base = ( contract_name, contract_params ) => {
 					}
 				})
 
-				describe( CONTRACT.METHODS.supplyMinted.SIGNATURE, () => {
-					if ( TEST.METHODS.supplyMinted ) {
-						it( 'Supply minted should be ' + contract_params.INIT_SUPPLY, async () => {
-							expect( await contract.supplyMinted() ).to.equal( contract_params.INIT_SUPPLY )
-						})
-					}
-				})
-
 				describe( CONTRACT.METHODS.mint.SIGNATURE, () => {
 					if ( TEST.METHODS.mint ) {
 						it( 'To non ERC721Receiver contract should be reverted with ' + ERROR.IERC721_NON_ERC721_RECEIVER, async () => {
@@ -266,10 +253,6 @@ const shouldBehaveLikeERC721Base = ( contract_name, contract_params ) => {
 
 								it( 'Owner of token ' + contract_params.INIT_SUPPLY + ' should be ' + token_owner_address, async () => {
 									expect( await contract.ownerOf( contract_params.INIT_SUPPLY ) ).to.equal( token_owner_address )
-								})
-
-								it( 'Supply minted should be ' + ( contract_params.INIT_SUPPLY + 1 ).toString(), async () => {
-									expect( await contract.supplyMinted() ).to.equal( contract_params.INIT_SUPPLY + 1 )
 								})
 
 								describe( CONTRACT.METHODS.approve.SIGNATURE, () => {
@@ -392,10 +375,6 @@ const shouldBehaveLikeERC721Base = ( contract_name, contract_params ) => {
 
 												it( 'Token ' + contract_params.INIT_SUPPLY + ' owner should now be ' + user1_name, async () => {
 													expect( await contract.ownerOf( contract_params.INIT_SUPPLY ) ).to.equal( user1_address )
-												})
-
-												it( 'Supply minted should still be ' + contract_params.INIT_SUPPLY + '1', async () => {
-													expect( await contract.supplyMinted() ).to.equal( contract_params.INIT_SUPPLY + 1 )
 												})
 
 												it( 'Balance of ' + token_owner_name + ' should now be 0', async () => {
@@ -613,10 +592,6 @@ const shouldBehaveLikeERC721Base = ( contract_name, contract_params ) => {
 													expect( await contract.ownerOf( contract_params.INIT_SUPPLY ) ).to.equal( user1_address )
 												})
 
-												it( 'Supply minted should still be ' + ( contract_params.INIT_SUPPLY + 1 ).toString(), async () => {
-													expect( await contract.supplyMinted() ).to.equal( contract_params.INIT_SUPPLY + 1 )
-												})
-
 												it( 'Balance of ' + token_owner_name + ' should now be 0', async () => {
 													expect( await contract.balanceOf( token_owner_address ) ).to.equal( 0 )
 												})
@@ -785,10 +760,6 @@ const shouldBehaveLikeERC721Base = ( contract_name, contract_params ) => {
 							token_owner_address,
 							user1_address,
 						],
-					}
-					defaultArgs[ CONTRACT.METHODS.supplyMinted.SIGNATURE ] = {
-						err  : null,
-						args : [],
 					}
 					defaultArgs[ CONTRACT.METHODS.mint.SIGNATURE ] = {
 						err  : null,

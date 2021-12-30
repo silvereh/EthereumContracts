@@ -140,10 +140,6 @@ const shouldBehaveLikeERC721BaseBurnable = ( contract_name, contract_params ) =>
 								await expect( contract.ownerOf( contract_params.INIT_SUPPLY ) ).to.be.revertedWith( ERROR.IERC721_NONEXISTANT_TOKEN )
 							})
 
-							it( 'Supply minted should still be ' + ( contract_params.INIT_SUPPLY + 1 ).toString(), async () => {
-								expect( await contract.supplyMinted() ).to.equal( contract_params.INIT_SUPPLY + 1 )
-							})
-
 							it( 'Balance of ' + token_owner_name + ' should now be 0', async () => {
 								expect( await contract.balanceOf( token_owner_address ) ).to.equal( 0 )
 							})
@@ -177,10 +173,6 @@ const shouldBehaveLikeERC721BaseBurnable = ( contract_name, contract_params ) =>
 
 							it( 'Token ' + contract_params.INIT_SUPPLY + ' owner should now be reverted with ' + ERROR.IERC721_NONEXISTANT_TOKEN, async () => {
 								await expect( contract.ownerOf( contract_params.INIT_SUPPLY ) ).to.be.revertedWith( ERROR.IERC721_NONEXISTANT_TOKEN )
-							})
-
-							it( 'Supply minted should still be ' + ( contract_params.INIT_SUPPLY + 1 ).toString(), async () => {
-								expect( await contract.supplyMinted() ).to.equal( contract_params.INIT_SUPPLY + 1 )
 							})
 
 							it( 'Balance of ' + token_owner_name + ' should now be 0', async () => {
