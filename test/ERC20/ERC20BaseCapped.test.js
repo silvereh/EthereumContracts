@@ -1,9 +1,9 @@
+const { TEST_ACTIVATION } = require( '../test-activation-module' )
 const { shouldBehaveLikeERC20BaseCapped } = require( './ERC20BaseCapped.behavior' )
 
 // For activating or de-activating test cases
 const TEST = {
 	NAME : 'ERC20BaseCapped',
-	CONTRACT : true,
 }
 
 // For contract data
@@ -16,7 +16,7 @@ const CONTRACT = {
 }
 
 describe( TEST.NAME, () => {
-	if ( TEST.CONTRACT ) {
+	if ( TEST_ACTIVATION[ TEST.NAME ] ) {
 		shouldBehaveLikeERC20BaseCapped( CONTRACT.NAME, CONTRACT.PARAMS )
 	}
 })

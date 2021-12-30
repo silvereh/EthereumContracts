@@ -1,9 +1,9 @@
+const { TEST_ACTIVATION } = require( '../test-activation-module' )
 const { shouldBehaveLikeIPausable } = require( './IPausable.behavior' )
 
 // For activating or de-activating test cases
 const TEST = {
 	NAME : 'IPausable',
-	CONTRACT : true,
 }
 
 // For contract data
@@ -15,7 +15,7 @@ const CONTRACT = {
 }
 
 describe( TEST.NAME, () => {
-	if ( TEST.CONTRACT ) {
+	if ( TEST_ACTIVATION[ TEST.NAME ] ) {
 		shouldBehaveLikeIPausable( CONTRACT.NAME, CONTRACT.PARAMS )
 	}
 })

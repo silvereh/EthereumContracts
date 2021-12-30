@@ -1,9 +1,9 @@
+const { TEST_ACTIVATION } = require( '../test-activation-module' )
 const { shouldBehaveLikeERC721BaseEnumerable } = require( './ERC721BaseEnumerable.behavior' )
 
 // For activating or de-activating test cases
 const TEST = {
 	NAME : 'ERC721BaseEnumerable',
-	CONTRACT : true,
 }
 
 // For contract data
@@ -17,7 +17,7 @@ const CONTRACT = {
 }
 
 describe( TEST.NAME, () => {
-	if ( TEST.CONTRACT ) {
+	if ( TEST_ACTIVATION[ TEST.NAME ] ) {
 		shouldBehaveLikeERC721BaseEnumerable( CONTRACT.NAME, CONTRACT.PARAMS )
 	}
 })

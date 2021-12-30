@@ -1,9 +1,9 @@
+const { TEST_ACTIVATION } = require( '../test-activation-module' )
 const { shouldBehaveLikeERC721Base } = require( './ERC721Base.behavior' )
 
 // For activating or de-activating test cases
 const TEST = {
 	NAME : 'ERC721Base',
-	CONTRACT : true,
 }
 
 // For contract data
@@ -17,7 +17,7 @@ const CONTRACT = {
 }
 
 describe( TEST.NAME, () => {
-	if ( TEST.CONTRACT ) {
+	if ( TEST_ACTIVATION[ TEST.NAME ] ) {
 		shouldBehaveLikeERC721Base( CONTRACT.NAME, CONTRACT.PARAMS )
 	}
 })

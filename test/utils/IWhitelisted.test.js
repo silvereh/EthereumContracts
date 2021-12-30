@@ -1,9 +1,9 @@
+const { TEST_ACTIVATION } = require( '../test-activation-module' )
 const { shouldBehaveLikeIWhitelisted } = require( './IWhitelisted.behavior' )
 
 // For activating or de-activating test cases
 const TEST = {
 	NAME : 'IWhitelisted',
-	CONTRACT : true,
 }
 
 // For contract data
@@ -17,7 +17,7 @@ const CONTRACT = {
 }
 
 describe( TEST.NAME, () => {
-	if ( TEST.CONTRACT ) {
+	if ( TEST_ACTIVATION[ TEST.NAME ] ) {
 		shouldBehaveLikeIWhitelisted( CONTRACT.NAME, CONTRACT.PARAMS )
 	}
 })

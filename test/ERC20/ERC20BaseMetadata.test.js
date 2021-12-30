@@ -1,9 +1,9 @@
+const { TEST_ACTIVATION } = require( '../test-activation-module' )
 const { shouldBehaveLikeERC20BaseMetadata } = require( './ERC20BaseMetadata.behavior' )
 
 // For activating or de-activating test cases
 const TEST = {
 	NAME : 'ERC20BaseMetadata',
-	CONTRACT : true,
 }
 
 // For contract data
@@ -19,7 +19,7 @@ const CONTRACT = {
 }
 
 describe( TEST.NAME, () => {
-	if ( TEST.CONTRACT ) {
+	if ( TEST_ACTIVATION[ TEST.NAME ] ) {
 		shouldBehaveLikeERC20BaseMetadata( CONTRACT.NAME, CONTRACT.PARAMS )
 	}
 })

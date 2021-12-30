@@ -10,6 +10,7 @@ artifacts
 # testing
 /coverage
 coverage.json
+gas-report.txt
 
 # misc
 .DS_Store
