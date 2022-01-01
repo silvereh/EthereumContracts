@@ -18,6 +18,7 @@ const TEST_ACTIVATION = {
 	// ERC1155
 	ERC1155Base            : true,
 	ERC1155BaseMetadataURI : true,
+	ERC1155BaseBurnable    : true,
 }
 
 module.exports = {

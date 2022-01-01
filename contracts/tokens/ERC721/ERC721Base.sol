@@ -325,7 +325,7 @@ abstract contract ERC721Base is IERC165, IERC721 {
 	}
 
 	/**
-	* @dev Returns true if `account` is a contract.
+	* @dev Returns true if `account_` is a contract.
 	*
 	* [IMPORTANT]
 	* ====
@@ -341,15 +341,15 @@ abstract contract ERC721Base is IERC165, IERC721 {
 	*  - an address where a contract lived, but was destroyed
 	* ====
 	*/
-	function _isContract(address account) internal view returns (bool) {
+	function _isContract( address account_ ) internal view returns ( bool ) {
 		// This method relies on extcodesize, which returns 0 for contracts in
 		// construction, since the code is only stored at the end of the
 		// constructor execution.
 
-		uint256 size;
+		uint256 _size_;
 		assembly {
-			size := extcodesize(account)
+			_size_ := extcodesize( account_ )
 		}
-		return size > 0;
+		return _size_ > 0;
 	}
 }

@@ -104,7 +104,7 @@ const CONTRACT = {
 }
 
 // Custom Error type for testing the transfer to ERC721Receiver (copied from Open Zeppelin)
-const Error = [ 'None', 'RevertWithMessage', 'RevertWithoutMessage', 'Panic' ]
+const Error = [ 'None', 'RevertWithError', 'RevertWithMessage', 'RevertWithoutMessage', 'Panic' ]
   .reduce((acc, entry, idx) => Object.assign({ [entry]: idx }, acc), {})
 
 const shouldBehaveLikeERC721Base = ( contract_name, contract_params ) => {
@@ -229,10 +229,6 @@ const shouldBehaveLikeERC721Base = ( contract_name, contract_params ) => {
 
 				describe( CONTRACT.METHODS.mint.SIGNATURE, () => {
 					if ( TEST.METHODS.mint ) {
-						it( 'To non ERC721Receiver contract should be reverted with ' + ERROR.IERC721_NON_ERC721_RECEIVER, async () => {
-							await expect( contract.mint( contract_address ) ).to.be.revertedWith( ERROR.IERC721_NON_ERC721_RECEIVER )
-						})
-
 						it( 'To the null address should be reverted with ' + ERROR.IERC721_NULL_ADDRESS_TRANSFER, async () => {
 							await expect( contract.mint( CST.ADDRESS_ZERO ) ).to.be.revertedWith( ERROR.IERC721_NULL_ADDRESS_TRANSFER )
 						})
@@ -429,10 +425,17 @@ const shouldBehaveLikeERC721Base = ( contract_name, contract_params ) => {
 												})
 											})
 
+											describe( 'To a receiver contract that reverts with error', function () {
+												it( 'Should be reverted with custom error', async function () {
+													const invalidReceiver = await holder_artifact.deploy( CST.INTERFACE_ID.IERC721Receiver, Error.RevertWithError )
+													await expect( contract.connect( token_owner ).functions[ CONTRACT.METHODS.safeTransferFrom.SIGNATURE ]( token_owner_address, invalidReceiver.address, contract_params.INIT_SUPPLY ) ).to.be.revertedWith( 'custom error' )
+												})
+											})
+
 											describe( 'To a receiver contract that reverts with message', function () {
 												it( 'Should be reverted with ' + ERROR.IERC721_NON_ERC721_RECEIVER, async function () {
 													const invalidReceiver = await holder_artifact.deploy( CST.INTERFACE_ID.IERC721Receiver, Error.RevertWithMessage )
-													await expect( contract.connect( token_owner ).functions[ CONTRACT.METHODS.safeTransferFrom.SIGNATURE ]( token_owner_address, invalidReceiver.address, contract_params.INIT_SUPPLY ) ).to.be.revertedWith( 'ERC721ReceiverMock: reverting' )
+													await expect( contract.connect( token_owner ).functions[ CONTRACT.METHODS.safeTransferFrom.SIGNATURE ]( token_owner_address, invalidReceiver.address, contract_params.INIT_SUPPLY ) ).to.be.revertedWith( 'MockERC721Receiver: reverting' )
 												})
 											})
 
@@ -459,7 +462,7 @@ const shouldBehaveLikeERC721Base = ( contract_name, contract_params ) => {
 											await contract.mint( token_owner_address )
 										})
 
-										it( 'Contract should emit a "' + CONTRACT.EVENTS.Transfer + '" event mentioning token ' + contract_params.INIT_SUPPLY + ' was transfered from ' + token_owner_name + ' to ' + user1_name, async () => {
+										it( 'Contract should emit a "' + CONTRACT.EVENTS.ApprovalForAll + '" event mentioning token ' + contract_params.INIT_SUPPLY + ' was transfered from ' + token_owner_name + ' to ' + user1_name, async () => {
 											await expect( contract.connect( token_owner ).setApprovalForAll( user1_address, true ) ).to.emit( contract, CONTRACT.EVENTS.ApprovalForAll ).withArgs( token_owner_address, user1_address, true )
 										})
 
@@ -662,10 +665,17 @@ const shouldBehaveLikeERC721Base = ( contract_name, contract_params ) => {
 							})
 						})
 
+						describe( 'To a receiver contract that reverts with error', function () {
+							it( 'Should be reverted with ' + ERROR.IERC721_NON_ERC721_RECEIVER, async function () {
+								const invalidReceiver = await holder_artifact.deploy( CST.INTERFACE_ID.IERC721Receiver, Error.RevertWithError )
+								await expect( contract.mint( invalidReceiver.address ) ).to.be.revertedWith( 'custom error' )
+							})
+						})
+
 						describe( 'To a receiver contract that reverts with message', function () {
 							it( 'Should be reverted with ' + ERROR.IERC721_NON_ERC721_RECEIVER, async function () {
 								const invalidReceiver = await holder_artifact.deploy( CST.INTERFACE_ID.IERC721Receiver, Error.RevertWithMessage )
-								await expect( contract.mint( invalidReceiver.address ) ).to.be.revertedWith( 'ERC721ReceiverMock: reverting' )
+								await expect( contract.mint( invalidReceiver.address ) ).to.be.revertedWith( 'MockERC721Receiver: reverting' )
 							})
 						})
 

@@ -7,6 +7,7 @@ import "../../interfaces/IERC721Receiver.sol";
 contract MockERC721Receiver is IERC721Receiver {
     enum Error {
         None,
+        RevertWithError,
         RevertWithMessage,
         RevertWithoutMessage,
         Panic
@@ -14,6 +15,7 @@ contract MockERC721Receiver is IERC721Receiver {
 
     bytes4 private immutable _retval;
     Error private immutable _error;
+    error ERC721ReceiverError();
 
     event Received( address operator, address from, uint256 tokenId, bytes data, uint256 gas );
 
@@ -28,11 +30,16 @@ contract MockERC721Receiver is IERC721Receiver {
         uint256 tokenId,
         bytes memory data
     ) public override returns ( bytes4 ) {
-        if ( _error == Error.RevertWithMessage ) {
-            revert( "ERC721ReceiverMock: reverting" );
-        } else if ( _error == Error.RevertWithoutMessage ) {
+        if ( _error == Error.RevertWithError ) {
+            revert ERC721ReceiverError();
+        }
+        else if ( _error == Error.RevertWithMessage ) {
+            revert( "MockERC721Receiver: reverting" );
+        }
+        else if ( _error == Error.RevertWithoutMessage ) {
             revert();
-        } else if ( _error == Error.Panic ) {
+        }
+        else if ( _error == Error.Panic ) {
             uint256( 0 ) / uint256( 0 );
         }
         emit Received( operator, from, tokenId, data, gasleft() );

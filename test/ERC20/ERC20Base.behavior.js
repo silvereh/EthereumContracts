@@ -337,8 +337,8 @@ const shouldBehaveLikeERC20Base = ( contract_name, contract_params ) => {
 							await expect( contract.functions[ CONTRACT.METHODS.mintBatch_ol.SIGNATURE ]( recipients, amounts ) ).to.be.revertedWith( ERROR.IERC20_NULL_ADDRESS_MINT )
 						})
 
-						it( 'Input arrays with different numbers of parameters should be reverted with ' + ERROR.IERC20_UNEVEN_PARAMETERS, async () => {
-							await expect( contract.functions[ CONTRACT.METHODS.mintBatch_ol.SIGNATURE ]( [user1_address, user2_address], [1] ) ).to.be.revertedWith( ERROR.IERC20_UNEVEN_PARAMETERS )
+						it( 'Input arrays with different numbers of parameters should be reverted with ' + ERROR.IERC20_ARRAY_LENGTH_MISMATCH, async () => {
+							await expect( contract.functions[ CONTRACT.METHODS.mintBatch_ol.SIGNATURE ]( [user1_address, user2_address], [1] ) ).to.be.revertedWith( ERROR.IERC20_ARRAY_LENGTH_MISMATCH )
 						})
 					}
 				})

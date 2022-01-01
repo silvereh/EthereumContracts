@@ -15,7 +15,7 @@ abstract contract ERC20Base is IERC20 {
 	error IERC20_NULL_ADDRESS_MINT();
 	error IERC20_INSUFFICIENT_BALANCE();
 	error IERC20_CALLER_NOT_ALLOWED();
-	error IERC20_UNEVEN_PARAMETERS();
+	error IERC20_ARRAY_LENGTH_MISMATCH();
 	error IERC20_APPROVE_OWNER();
 
 	uint256 private _totalSupply;
@@ -199,7 +199,7 @@ abstract contract ERC20Base is IERC20 {
 		uint256 _len_ = accounts_.length;
 		uint256 _newSupply_;
 		if ( _len_ != amounts_.length ) {
-			revert IERC20_UNEVEN_PARAMETERS();
+			revert IERC20_ARRAY_LENGTH_MISMATCH();
 		}
 
 		for ( uint256 i; i < _len_; i ++ ) {
