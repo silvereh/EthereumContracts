@@ -4,17 +4,19 @@ const ERROR = {
 		PANIC : 'panic code',
 	// IERC2981
 		IERC2981_INVALID_ROYALTIES : 'IERC2981_INVALID_ROYALTIES',
+	// IInitializable
+		IInitializable_ALREADY_INITIALIZED : 'IInitializable_ALREADY_INITIALIZED',
 	// IOwnable
 		IOwnable_NOT_OWNER : 'IOwnable_NOT_OWNER',
 	// IPausable
 		IPausable_SALE_NOT_CLOSED : 'IPausable_SALE_NOT_CLOSED',
 		IPausable_SALE_CLOSED     : 'IPausable_SALE_CLOSED',
 		IPausable_PRESALE_CLOSED  : 'IPausable_PRESALE_CLOSED',
-	// IWhitelisted
-		IWhitelisted_NOT_SET      : 'IWhitelisted_NOT_SET',
-		IWhitelisted_CONSUMED     : 'IWhitelisted_CONSUMED',
-		IWhitelisted_FORBIDDEN    : 'IWhitelisted_FORBIDDEN',
-		IWhitelisted_NO_ALLOWANCE : 'IWhitelisted_NO_ALLOWANCE',
+	// IWhitelistable
+		IWhitelistable_NOT_SET      : 'IWhitelistable_NOT_SET',
+		IWhitelistable_CONSUMED     : 'IWhitelistable_CONSUMED',
+		IWhitelistable_FORBIDDEN    : 'IWhitelistable_FORBIDDEN',
+		IWhitelistable_NO_ALLOWANCE : 'IWhitelistable_NO_ALLOWANCE',
 	// IERC721
 		IERC721_APPROVE_OWNER         : 'IERC721_APPROVE_OWNER',
 		IERC721_APPROVE_CALLER        : 'IERC721_APPROVE_CALLER',
@@ -24,14 +26,9 @@ const ERROR = {
 		IERC721_NULL_ADDRESS_TRANSFER : 'IERC721_NULL_ADDRESS_TRANSFER',
 		IERC721_TOKEN_NOT_OWNED       : 'IERC721_TOKEN_NOT_OWNED',
 		IERC721_NON_ERC721_RECEIVER   : 'IERC721_NON_ERC721_RECEIVER',
-	// ERC721Burnable
-		ERC721Burnable_CALLER_NOT_APPROVED : 'ERC721Burnable_CALLER_NOT_APPROVED',
 	// IERC721Enumerable
 		IERC721Enumerable_OWNER_INDEX_OUT_OF_BOUNDS : 'IERC721Enumerable_OWNER_INDEX_OUT_OF_BOUNDS',
-		IERC721Enumerable_NULL_ADDRESS_BALANCE      : 'IERC721Enumerable_NULL_ADDRESS_BALANCE',
-		IERC721Enumerable_NONEXISTANT_TOKEN         : 'IERC721Enumerable_NONEXISTANT_TOKEN',
-	// IERC721Metadata
-		IERC721Metadata_NONEXISTANT_TOKEN : 'IERC721Metadata_NONEXISTANT_TOKEN',
+		IERC721Enumerable_INDEX_OUT_OF_BOUNDS       : 'IERC721Enumerable_INDEX_OUT_OF_BOUNDS',
 	// ERC20Base
 		IERC20_NULL_ADDRESS_TRANSFER : 'IERC20_NULL_ADDRESS_TRANSFER',
 		IERC20_NULL_ADDRESS_OWNER    : 'IERC20_NULL_ADDRESS_OWNER',
@@ -51,6 +48,21 @@ const ERROR = {
 		IERC1155_NON_ERC1155_RECEIVER  : 'IERC1155_NON_ERC1155_RECEIVER',
 		IERC1155_ARRAY_LENGTH_MISMATCH : 'IERC1155_ARRAY_LENGTH_MISMATCH',
 		IERC1155_INSUFFICIENT_BALANCE  : 'IERC1155_INSUFFICIENT_BALANCE',
+	// OZERC721
+		OZERC721_APPROVE_CALLER               : 'approve to caller',
+		OZERC721_APPROVE_OWNER                : 'approval to current owner',
+		OZERC721_CALLER_NOT_APPROVED_APPROVE  : 'approve caller is not owner nor approved for all',
+		OZERC721_CALLER_NOT_APPROVED_TRANSFER : 'transfer caller is not owner nor approved',
+		OZERC721_MINT_EXISTING_TOKEN          : 'token already minted',
+		OZERC721_NONEXISTANT_TOKEN            : 'query for nonexistent token',
+		OZERC721_NON_ERC721_RECEIVER          : 'transfer to non ERC721Receiver implementer',
+		OZERC721_NULL_ADDRESS_BALANCE         : 'balance query for the zero address',
+		OZERC721_NULL_ADDRESS_MINT            : 'mint to the zero address',
+		OZERC721_NULL_ADDRESS_TRANSFER        : 'transfer to the zero address',
+		OZERC721_TRANSFER_TOKEN_NOT_OWNED     : 'transfer of token that is not own',
+	// MOCK ERC721Receiver
+		ERC721Receiver_ERROR   : 'custom error',
+		ERC721Receiver_MESSAGE : 'Mock_ERC721Receiver: reverting',
 }
 
 // For expected thrown errors
@@ -65,6 +77,7 @@ const THROW = {
 	INVALID_BIG_NUMBER_STR   : /invalid BigNumber string/,
 	INVALID_BIG_NUMBER_VALUE : /invalid BigNumber value/,
 	INVALID_ARRAYIFY_VALUE   : /invalid arrayify value/,
+	INVALID_VALUE_FOR_ARRAY  : /invalid value for array/,
 	OVERFLOW                 : /overflow/,
 	UNDERFLOW                : /underflow/,
 	OUT_OF_GAS               : /out of gas/,

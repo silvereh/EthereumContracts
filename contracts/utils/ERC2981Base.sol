@@ -24,7 +24,7 @@ abstract contract ERC2981Base is IERC165, IERC2981 {
 	// Address of the recipient of the royalties.
 	address private _recipient;
 
-	constructor( address recipient_, uint256 rate_ ) {
+	function _initERC2981Base( address recipient_, uint256 rate_ ) internal {
 		_setRoyaltyInfo( recipient_, rate_ );
 	}
 

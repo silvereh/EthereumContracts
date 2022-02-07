@@ -23,8 +23,6 @@ abstract contract IPausable {
 	*/
 	event SaleStateChanged( SaleState indexed previousState, SaleState indexed newState );
 
-	constructor() {}
-
 	/**
 	* @dev Sale state can have one of 3 values, ``CLOSED``, ``PRESALE``, or ``SALE``.
 	*/

@@ -19,7 +19,7 @@ abstract contract ERC20BaseMetadata is IERC20Metadata, ERC20Base {
 	// Token symbol
 	string private _symbol;
 
-	constructor( string memory name_, string memory symbol_ ) {
+	function _initERC20BaseMetadata( string memory name_, string memory symbol_ ) internal {
 		_name   = name_;
 		_symbol = symbol_;
 	}

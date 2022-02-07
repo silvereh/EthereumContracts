@@ -102,36 +102,6 @@ abstract contract ERC1155Base is IERC1155 {
 			interfaceId_ == type( IERC165 ).interfaceId;
 	}
 
-	function _mint( address account_, uint256 id_, uint256 amount_ ) internal virtual {
-		if ( account_ == address( 0 ) ) {
-			revert IERC1155_NULL_ADDRESS_TRANSFER();
-		}
-		_transferTo( account_, id_, amount_ );
-		if ( ! _checkOnERC1155Received( address( 0 ), account_, id_, amount_, "" ) ) {
-			revert IERC1155_NON_ERC1155_RECEIVER();
-		}
-		emit TransferSingle( msg.sender, address( 0 ), account_, id_, amount_ );
-	}
-
-	function _batchMint( address account_, uint256[] memory ids_, uint256[] memory amounts_ ) internal virtual {
-		if ( account_ == address( 0 ) ) {
-			revert IERC1155_NULL_ADDRESS_TRANSFER();
-		}
-
-		uint256 _len_ = amounts_.length;
-		if ( _len_ != ids_.length ) {
-			revert IERC1155_ARRAY_LENGTH_MISMATCH();
-		}
-
-		for ( uint256 i; i < _len_; i ++ ) {
-			_transferTo( account_, ids_[ i ], amounts_[ i ] );
-		}
-		if ( ! _checkOnERC1155BatchReceived( address( 0 ), account_, ids_, amounts_, "" ) ) {
-			revert IERC1155_NON_ERC1155_RECEIVER();
-		}
-		emit TransferBatch( msg.sender, address( 0 ), account_, ids_, amounts_ );
-	}
-
 	/**
 	* @dev Removes `amount_` tokens of series `id_` from ``account_``'s balance.
 	* 
@@ -170,11 +140,14 @@ abstract contract ERC1155Base is IERC1155 {
 	* acceptance magic value.
 	*/
 	function _transfer( address operator_, address from_, address to_, uint256 id_, uint256 amount_, bytes memory data_ ) internal virtual {
-		if ( operator_ != from_ && ! isApprovedForAll( from_, operator_ ) ) {
-			revert IERC1155_CALLER_NOT_APPROVED();
+		if ( from_ != address( 0 ) ) {
+			if ( operator_ != from_ && ! isApprovedForAll( from_, operator_ ) ) {
+				revert IERC1155_CALLER_NOT_APPROVED();
+			}
+
+			_removeFrom( from_, id_, amount_ );
 		}
 
-		_removeFrom( from_, id_, amount_ );
 		if ( to_ != address( 0 ) ) {
 			_transferTo( to_, id_, amount_ );
 
@@ -182,6 +155,7 @@ abstract contract ERC1155Base is IERC1155 {
 				revert IERC1155_NON_ERC1155_RECEIVER();
 			}
 		}
+
 		emit TransferSingle( operator_, from_, to_, id_, amount_ );
 	}
 
@@ -202,24 +176,34 @@ abstract contract ERC1155Base is IERC1155 {
 			revert IERC1155_ARRAY_LENGTH_MISMATCH();
 		}
 
-		if ( operator_ != from_ && ! isApprovedForAll( from_, operator_ ) ) {
-			revert IERC1155_CALLER_NOT_APPROVED();
+		if ( from_ != address( 0 ) ) {
+			if ( operator_ != from_ && ! isApprovedForAll( from_, operator_ ) ) {
+				revert IERC1155_CALLER_NOT_APPROVED();
+			}
 		}
 
-		if ( to_ != address( 0 ) ) {
+		if ( to_ != address( 0 ) && from_ != address( 0 ) ) {
 			for ( uint256 i; i < _len_; i ++ ) {
 				_removeFrom( from_, ids_[ i ], amounts_[ i ] );
 				_transferTo( to_, ids_[ i ], amounts_[ i ] );
 			}
+		}
+		else if ( from_ != address( 0 ) ) {
+			for ( uint256 i; i < _len_; i ++ ) {
+				_removeFrom( from_, ids_[ i ], amounts_[ i ] );
+			}
+		}
+		else if ( to_ != address( 0 ) ) {
+			for ( uint256 i; i < _len_; i ++ ) {
+				_transferTo( to_, ids_[ i ], amounts_[ i ] );
+			}
+		}
+
+		if ( to_ != address( 0 ) ) {
 			if ( ! _checkOnERC1155BatchReceived( from_, to_, ids_, amounts_, data_ ) ) {
 				revert IERC1155_NON_ERC1155_RECEIVER();
 			}
 		}
-		else {
-			for ( uint256 i; i < _len_; i ++ ) {
-				_removeFrom( from_, ids_[ i ], amounts_[ i ] );
-			}
-		} 
 
 		emit TransferBatch( operator_, from_, to_, ids_, amounts_ );
 	}

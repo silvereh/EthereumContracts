@@ -16,7 +16,7 @@ contract ITradable {
 	// OpenSea proxy registry address
 	address internal _proxyRegistryAddress;
 
-	constructor( address proxyRegistryAddress_ ) {
+	function _initITradable( address proxyRegistryAddress_ ) internal {
 		_proxyRegistryAddress = proxyRegistryAddress_;
 	}
 

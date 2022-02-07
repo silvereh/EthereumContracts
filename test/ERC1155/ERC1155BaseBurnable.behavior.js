@@ -122,7 +122,7 @@ const shouldBehaveLikeERC1155BaseBurnable = ( contract_name, contract_params ) =
 
 						describe( 'When a series has been minted', () => {
 							beforeEach( async () => {
-								await contract.connect( token_owner ).mint( token_owner_address, contract_params.INIT_SERIES, 1 )
+								await contract.connect( token_owner ).mint( contract_params.INIT_SERIES, 1 )
 							})
 
 							it( 'Trying to burn more tokens than owned should be reverted with ' + ERROR.IERC1155_INSUFFICIENT_BALANCE, async () => {
@@ -153,7 +153,7 @@ const shouldBehaveLikeERC1155BaseBurnable = ( contract_name, contract_params ) =
 
 						describe( 'When series have been minted', () => {
 							beforeEach( async () => {
-								await contract.connect( token_owner ).batchMint( token_owner_address, [ contract_params.INIT_SERIES ], [ 1 ] )
+								await contract.connect( token_owner ).batchMint( [ contract_params.INIT_SERIES ], [ 1 ] )
 							})
 
 							it( 'Trying to burn more tokens than owned should be reverted with ' + ERROR.IERC1155_INSUFFICIENT_BALANCE, async () => {

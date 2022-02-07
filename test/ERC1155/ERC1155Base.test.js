@@ -8,7 +8,7 @@ const TEST = {
 
 // For contract data
 const CONTRACT = {
-	NAME : 'MockERC1155Base',
+	NAME : 'Mock_ERC1155Base',
 	PARAMS : {
 		CONSTRUCT   : [],
 		INIT_SUPPLY : 0,

@@ -95,7 +95,7 @@ const shouldBehaveLikeITradable = ( contract_name, contract_params ) => {
 			user1_address = user1.address
 			user2_address = user2.address
 
-			proxy_artifact = await ethers.getContractFactory( 'MockProxyRegistry' )
+			proxy_artifact = await ethers.getContractFactory( 'Mock_ProxyRegistry' )
 			proxy = await proxy_artifact.deploy()
 			await proxy.deployed()
 			proxy_address = proxy.address

@@ -8,7 +8,7 @@ const TEST = {
 
 // For contract data
 const CONTRACT = {
-	NAME : 'MockIOwnable',
+	NAME : 'Mock_IOwnable',
 	PARAMS : {
 		CONSTRUCT : [],
 	},

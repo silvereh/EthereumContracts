@@ -34,8 +34,6 @@ const TEST = {
 		balanceOf             : true,
 		balanceOfBatch        : true,
 		isApprovedForAll      : true,
-		mint                  : true,
-		batchMint             : true,
 		setApprovalForAll     : true,
 		safeTransferFrom      : true,
 		safeBatchTransferFrom : true,
@@ -67,14 +65,6 @@ const CONTRACT = {
 		isApprovedForAll : {
 			SIGNATURE : 'isApprovedForAll(address,address)',
 			PARAMS    : [ 'account_', 'operator_' ],
-		},
-		mint : {
-			SIGNATURE : 'mint(address,uint256,uint256)',
-			PARAMS    : [ 'account_', 'id_', 'amount_' ],
-		},
-		batchMint : {
-			SIGNATURE : 'batchMint(address,uint256[],uint256[])',
-			PARAMS    : [ 'account_', 'ids_', 'amounts_' ],
 		},
 		setApprovalForAll : {
 			SIGNATURE : 'setApprovalForAll(address,bool)',
@@ -145,7 +135,7 @@ const shouldBehaveLikeERC1155Base = ( contract_name, contract_params ) => {
 			user2_address = user2.address
 
 			contract_artifact = await ethers.getContractFactory( contract_name )
-			holder_artifact   = await ethers.getContractFactory( 'MockERC1155Receiver' )
+			holder_artifact   = await ethers.getContractFactory( 'Mock_ERC1155Receiver' )
 		})
 
 		beforeEach( async () => {
@@ -234,181 +224,130 @@ const shouldBehaveLikeERC1155Base = ( contract_name, contract_params ) => {
 					}
 				})
 
-				describe( CONTRACT.METHODS.mint.SIGNATURE, () => {
-					if ( TEST.METHODS.mint ) {
-						it( 'To the null address should be reverted with ' + ERROR.IERC1155_NULL_ADDRESS_TRANSFER, async () => {
-							await expect( contract.connect( token_owner ).mint( CST.ADDRESS_ZERO, contract_params.INIT_SERIES, 1 ) ).to.be.revertedWith( ERROR.IERC1155_NULL_ADDRESS_TRANSFER )
+				describe( 'After minting a token', () => {
+					describe( CONTRACT.EVENTS.TransferSingle, () => {
+						if ( TEST.EVENTS.TransferSingle ) {
+							it( 'Contract should emit a ' + CONTRACT.EVENTS.TransferSingle + ' event mentioning a token from the series ' + contract_params.INIT_SERIES + ' was transfered from ' + CST.ADDRESS_ZERO + ' to ' + token_owner_name + ' by ' + token_owner_name, async () => {
+								await expect( contract.connect( token_owner ).mint( contract_params.INIT_SERIES, 1 ) ).to.emit( contract, CONTRACT.EVENTS.TransferSingle ).withArgs( token_owner_address, CST.ADDRESS_ZERO, token_owner_address, contract_params.INIT_SERIES, 1 )
+							})
+						}
+					})
+
+					describe( 'Mint a token from series ' + contract_params.INIT_SERIES, () => {
+						beforeEach( async () => {
+							await contract.connect( token_owner ).mint( contract_params.INIT_SERIES, 1 )
 						})
 
-						describe( CONTRACT.EVENTS.TransferSingle, () => {
-							if ( TEST.EVENTS.TransferSingle ) {
-								it( 'Contract should emit a ' + CONTRACT.EVENTS.TransferSingle + ' event mentioning a token from the series ' + contract_params.INIT_SERIES + ' was transfered from ' + CST.ADDRESS_ZERO + ' to ' + token_owner_name + ' by ' + token_owner_name, async () => {
-									await expect( contract.connect( token_owner ).mint( token_owner_address, contract_params.INIT_SERIES, 1 ) ).to.emit( contract, CONTRACT.EVENTS.TransferSingle ).withArgs( token_owner_address, CST.ADDRESS_ZERO, token_owner_address, contract_params.INIT_SERIES, 1 )
+						it( 'Balance of ' + token_owner_name + ' for series ' + contract_params.INIT_SERIES + ' should be 1', async () => {
+							expect( await contract.balanceOf( token_owner_address, contract_params.INIT_SERIES ) ).to.equal( 1 )
+						})
+
+						describe( CONTRACT.METHODS.safeTransferFrom.SIGNATURE, () => {
+							if ( TEST.METHODS.safeTransferFrom ) {
+								it( 'Trying to transfer more tokens than owned should be reverted with ' + ERROR.IERC1155_INSUFFICIENT_BALANCE, async () => {
+									await expect( contract.connect( token_owner ).safeTransferFrom( token_owner_address, user1_address, contract_params.INIT_SERIES, 2, '0x' ) ).to.be.revertedWith( ERROR.IERC1155_INSUFFICIENT_BALANCE )
+								})
+
+								it( 'Trying to transfer tokens not owned should be reverted with ' + ERROR.IERC1155_CALLER_NOT_APPROVED, async () => {
+									await expect( contract.connect( user1 ).safeTransferFrom( token_owner_address, user1_address, contract_params.INIT_SERIES, 1, '0x' ) ).to.be.revertedWith( ERROR.IERC1155_CALLER_NOT_APPROVED )
+								})
+
+								describe( 'Transfer of a token owned', () => {
+									it( 'To the null address, should be reverted with ' + ERROR.IERC1155_NULL_ADDRESS_TRANSFER, async () => {
+										await expect( contract.connect( token_owner ).safeTransferFrom( token_owner_address, CST.ADDRESS_ZERO, contract_params.INIT_SERIES, 1, '0x' ) ).to.be.revertedWith( ERROR.IERC1155_NULL_ADDRESS_TRANSFER )
+									})
+
+									it( 'To non ERC1155Receiver contract, should be reverted with ' + ERROR.IERC1155_NON_ERC1155_RECEIVER, async () => {
+										await expect( contract.connect( token_owner ).safeTransferFrom( token_owner_address, contract_address, contract_params.INIT_SERIES, 1, '0x' ) ).to.be.revertedWith( ERROR.IERC1155_NON_ERC1155_RECEIVER )
+									})
+
+									it( 'Contract should emit a ' + CONTRACT.EVENTS.TransferSingle + ' event mentioning a token of the ' + contract_params.INIT_SERIES + ' series was transfered from ' + token_owner_name + ' to ' + user1_name + ' by ' + token_owner_name, async () => {
+										await expect( contract.connect( token_owner ).safeTransferFrom( token_owner_address, user1_address, contract_params.INIT_SERIES, 1, '0x' ) ).to.emit( contract, CONTRACT.EVENTS.TransferSingle ).withArgs( token_owner_address, token_owner_address, user1_address, contract_params.INIT_SERIES, 1 )
+									})
+
+									it( 'To other user', async () => {
+										await contract.connect( token_owner ).safeTransferFrom( token_owner_address, user1_address, contract_params.INIT_SERIES, 1, '0x' )
+										expect( await contract.balanceOf( token_owner_address, contract_params.INIT_SERIES ) ).to.equal( 0 )
+										expect( await contract.balanceOf( user1_address, contract_params.INIT_SERIES ) ).to.equal( 1 )
+									})
+
+									it( 'To a valid receiver contract', async () => {
+										const holder = await holder_artifact.deploy( CST.INTERFACE_ID.IERC1155SingleReceiver, Error.None )
+										await contract.connect( token_owner ).safeTransferFrom( token_owner_address, holder.address, contract_params.INIT_SERIES, 1, '0x' )
+										expect( await contract.balanceOf( token_owner_address, contract_params.INIT_SERIES ) ).to.equal( 0 )
+										expect( await contract.balanceOf( holder.address, contract_params.INIT_SERIES ) ).to.equal( 1 )
+									})
+
+									describe( 'To a receiver contract returning unexpected value', function () {
+										it( 'Should be reverted with ' + ERROR.IERC1155_NON_ERC1155_RECEIVER, async function () {
+											const invalidReceiver = await holder_artifact.deploy( CST.INTERFACE_ID.IERC165, Error.None )
+											await expect( contract.connect( token_owner ).safeTransferFrom( token_owner_address, invalidReceiver.address, contract_params.INIT_SERIES, 1, '0x' ) ).to.be.revertedWith( ERROR.IERC1155_NON_ERC1155_RECEIVER )
+										})
+									})
+
+									describe( 'To a receiver contract that reverts with error', function () {
+										it( 'Should be reverted with custom error', async function () {
+											const invalidReceiver = await holder_artifact.deploy( CST.INTERFACE_ID.IERC1155SingleReceiver, Error.RevertWithError )
+											await expect( contract.connect( token_owner ).safeTransferFrom( token_owner_address, invalidReceiver.address, contract_params.INIT_SERIES, 1, '0x' ) ).to.be.revertedWith( 'custom error' )
+										})
+									})
+
+									describe( 'To a receiver contract that reverts with message', function () {
+										it( 'Should be reverted with ' + ERROR.IERC1155_NON_ERC1155_RECEIVER, async function () {
+											const invalidReceiver = await holder_artifact.deploy( CST.INTERFACE_ID.IERC1155SingleReceiver, Error.RevertWithMessage )
+											await expect( contract.connect( token_owner ).safeTransferFrom( token_owner_address, invalidReceiver.address, contract_params.INIT_SERIES, 1, '0x' ) ).to.be.revertedWith( 'Mock_ERC1155Receiver: reverting' )
+										})
+									})
+
+									describe( 'To a receiver contract that reverts without message', function () {
+										it( 'Should be reverted with ' + ERROR.IERC1155_NON_ERC1155_RECEIVER, async function () {
+											const invalidReceiver = await holder_artifact.deploy( CST.INTERFACE_ID.IERC1155SingleReceiver, Error.RevertWithoutMessage )
+											await expect( contract.connect( token_owner ).safeTransferFrom( token_owner_address, invalidReceiver.address, contract_params.INIT_SERIES, 1, '0x' ) ).to.be.revertedWith( ERROR.IERC1155_NON_ERC1155_RECEIVER )
+										})
+									})
+
+									describe( 'To a receiver contract that panics', function () {
+										it( 'Should be reverted with ' + ERROR.PANIC, async function () {
+											const invalidReceiver = await holder_artifact.deploy( CST.INTERFACE_ID.IERC1155SingleReceiver, Error.Panic )
+											await expect( contract.connect( token_owner ).safeTransferFrom( token_owner_address, invalidReceiver.address, contract_params.INIT_SERIES, 1, '0x' ) ).to.be.revertedWith( ERROR.PANIC )
+										})
+									})
 								})
 							}
 						})
 
-						describe( 'Mint a token from series ' + contract_params.INIT_SERIES, () => {
-							beforeEach( async () => {
-								await contract.connect( token_owner ).mint( token_owner_address, contract_params.INIT_SERIES, 1 )
-							})
+						describe( CONTRACT.METHODS.setApprovalForAll.SIGNATURE, () => {
+							if ( TEST.METHODS.setApprovalForAll ) {
+								describe( CONTRACT.EVENTS.ApprovalForAll, () => {
+									if ( TEST.EVENTS.ApprovalForAll ) {
+										it( 'Contract should emit a "' + CONTRACT.EVENTS.ApprovalForAll + '" event mentioning that ' + user1_name + ' is now allowed to transfer tokens on behalf of ' + token_owner_name, async () => {
+											await expect( contract.connect( token_owner ).setApprovalForAll( user1_address, true ) ).to.emit( contract, CONTRACT.EVENTS.ApprovalForAll ).withArgs( token_owner_address, user1_address, true )
+										})
+									}
+								})
 
-							it( 'Balance of ' + token_owner_name + ' for series ' + contract_params.INIT_SERIES + ' should be 1', async () => {
-								expect( await contract.balanceOf( token_owner_address, contract_params.INIT_SERIES ) ).to.equal( 1 )
-							})
+								it( 'Trying to approve oneself should be reverted with ' + ERROR.IERC1155_APPROVE_CALLER, async () => {
+									await expect( contract.connect( token_owner ).setApprovalForAll( token_owner_address, true ) ).to.be.revertedWith( ERROR.IERC1155_APPROVE_CALLER )
+								})
 
-							describe( CONTRACT.METHODS.safeTransferFrom.SIGNATURE, () => {
-								if ( TEST.METHODS.safeTransferFrom ) {
-									it( 'Trying to transfer more tokens than owned should be reverted with ' + ERROR.IERC1155_INSUFFICIENT_BALANCE, async () => {
-										await expect( contract.connect( token_owner ).safeTransferFrom( token_owner_address, user1_address, contract_params.INIT_SERIES, 2, '0x' ) ).to.be.revertedWith( ERROR.IERC1155_INSUFFICIENT_BALANCE )
+								describe( 'Allowing another user to trade owned tokens', () => {
+									beforeEach( async () => {
+										await contract.connect( token_owner ).setApprovalForAll( user1_address, true )
 									})
 
-									it( 'Trying to transfer tokens not owned should be reverted with ' + ERROR.IERC1155_CALLER_NOT_APPROVED, async () => {
-										await expect( contract.connect( user1 ).safeTransferFrom( token_owner_address, user1_address, contract_params.INIT_SERIES, 1, '0x' ) ).to.be.revertedWith( ERROR.IERC1155_CALLER_NOT_APPROVED )
+									it( user1_name + ' should now be allowed to trade tokens owned by ' + token_owner_name, async () => {
+										expect( await contract.isApprovedForAll( token_owner_address, user1_address ) ).to.be.true
 									})
 
-									describe( 'Transfer of a token owned', () => {
-										it( 'To the null address, should be reverted with ' + ERROR.IERC1155_NULL_ADDRESS_TRANSFER, async () => {
-											await expect( contract.connect( token_owner ).safeTransferFrom( token_owner_address, CST.ADDRESS_ZERO, contract_params.INIT_SERIES, 1, '0x' ) ).to.be.revertedWith( ERROR.IERC1155_NULL_ADDRESS_TRANSFER )
-										})
-
-										it( 'To non ERC1155Receiver contract, should be reverted with ' + ERROR.IERC1155_NON_ERC1155_RECEIVER, async () => {
-											await expect( contract.connect( token_owner ).safeTransferFrom( token_owner_address, contract_address, contract_params.INIT_SERIES, 1, '0x' ) ).to.be.revertedWith( ERROR.IERC1155_NON_ERC1155_RECEIVER )
-										})
-
-										it( 'Contract should emit a ' + CONTRACT.EVENTS.TransferSingle + ' event mentioning a token of the ' + contract_params.INIT_SERIES + ' series was transfered from ' + token_owner_name + ' to ' + user1_name + ' by ' + token_owner_name, async () => {
-											await expect( contract.connect( token_owner ).safeTransferFrom( token_owner_address, user1_address, contract_params.INIT_SERIES, 1, '0x' ) ).to.emit( contract, CONTRACT.EVENTS.TransferSingle ).withArgs( token_owner_address, token_owner_address, user1_address, contract_params.INIT_SERIES, 1 )
-										})
-
-										it( 'To other user', async () => {
-											await contract.connect( token_owner ).safeTransferFrom( token_owner_address, user1_address, contract_params.INIT_SERIES, 1, '0x' )
-											expect( await contract.balanceOf( token_owner_address, contract_params.INIT_SERIES ) ).to.equal( 0 )
-											expect( await contract.balanceOf( user1_address, contract_params.INIT_SERIES ) ).to.equal( 1 )
-										})
-
-										it( 'To a valid receiver contract', async () => {
-											const holder = await holder_artifact.deploy( CST.INTERFACE_ID.IERC1155SingleReceiver, Error.None )
-											await contract.connect( token_owner ).safeTransferFrom( token_owner_address, holder.address, contract_params.INIT_SERIES, 1, '0x' )
-											expect( await contract.balanceOf( token_owner_address, contract_params.INIT_SERIES ) ).to.equal( 0 )
-											expect( await contract.balanceOf( holder.address, contract_params.INIT_SERIES ) ).to.equal( 1 )
-										})
-
-										describe( 'To a receiver contract returning unexpected value', function () {
-											it( 'Should be reverted with ' + ERROR.IERC1155_NON_ERC1155_RECEIVER, async function () {
-												const invalidReceiver = await holder_artifact.deploy( CST.INTERFACE_ID.IERC165, Error.None )
-												await expect( contract.connect( token_owner ).safeTransferFrom( token_owner_address, invalidReceiver.address, contract_params.INIT_SERIES, 1, '0x' ) ).to.be.revertedWith( ERROR.IERC1155_NON_ERC1155_RECEIVER )
-											})
-										})
-
-										describe( 'To a receiver contract that reverts with error', function () {
-											it( 'Should be reverted with custom error', async function () {
-												const invalidReceiver = await holder_artifact.deploy( CST.INTERFACE_ID.IERC1155SingleReceiver, Error.RevertWithError )
-												await expect( contract.connect( token_owner ).safeTransferFrom( token_owner_address, invalidReceiver.address, contract_params.INIT_SERIES, 1, '0x' ) ).to.be.revertedWith( 'custom error' )
-											})
-										})
-
-										describe( 'To a receiver contract that reverts with message', function () {
-											it( 'Should be reverted with ' + ERROR.IERC1155_NON_ERC1155_RECEIVER, async function () {
-												const invalidReceiver = await holder_artifact.deploy( CST.INTERFACE_ID.IERC1155SingleReceiver, Error.RevertWithMessage )
-												await expect( contract.connect( token_owner ).safeTransferFrom( token_owner_address, invalidReceiver.address, contract_params.INIT_SERIES, 1, '0x' ) ).to.be.revertedWith( 'MockERC1155Receiver: reverting' )
-											})
-										})
-
-										describe( 'To a receiver contract that reverts without message', function () {
-											it( 'Should be reverted with ' + ERROR.IERC1155_NON_ERC1155_RECEIVER, async function () {
-												const invalidReceiver = await holder_artifact.deploy( CST.INTERFACE_ID.IERC1155SingleReceiver, Error.RevertWithoutMessage )
-												await expect( contract.connect( token_owner ).safeTransferFrom( token_owner_address, invalidReceiver.address, contract_params.INIT_SERIES, 1, '0x' ) ).to.be.revertedWith( ERROR.IERC1155_NON_ERC1155_RECEIVER )
-											})
-										})
-
-										describe( 'To a receiver contract that panics', function () {
-											it( 'Should be reverted with ' + ERROR.PANIC, async function () {
-												const invalidReceiver = await holder_artifact.deploy( CST.INTERFACE_ID.IERC1155SingleReceiver, Error.Panic )
-												await expect( contract.connect( token_owner ).safeTransferFrom( token_owner_address, invalidReceiver.address, contract_params.INIT_SERIES, 1, '0x' ) ).to.be.revertedWith( ERROR.PANIC )
-											})
-										})
+									it( user1_name + ' can now transfer a token on behalf of ' + token_owner_name, async () => {
+										await contract.connect( user1 ).safeTransferFrom( token_owner_address, user1_address, contract_params.INIT_SERIES, 1, '0x' )
+										expect( await contract.balanceOf( token_owner_address, contract_params.INIT_SERIES ) ).to.equal( 0 )
+										expect( await contract.balanceOf( user1_address, contract_params.INIT_SERIES ) ).to.equal( 1 )
 									})
-								}
-							})
-
-							describe( CONTRACT.METHODS.setApprovalForAll.SIGNATURE, () => {
-								if ( TEST.METHODS.setApprovalForAll ) {
-									describe( CONTRACT.EVENTS.ApprovalForAll, () => {
-										if ( TEST.EVENTS.ApprovalForAll ) {
-											it( 'Contract should emit a "' + CONTRACT.EVENTS.ApprovalForAll + '" event mentioning that ' + user1_name + ' is now allowed to transfer tokens on behalf of ' + token_owner_name, async () => {
-												await expect( contract.connect( token_owner ).setApprovalForAll( user1_address, true ) ).to.emit( contract, CONTRACT.EVENTS.ApprovalForAll ).withArgs( token_owner_address, user1_address, true )
-											})
-										}
-									})
-
-									it( 'Trying to approve oneself should be reverted with ' + ERROR.IERC1155_APPROVE_CALLER, async () => {
-										await expect( contract.connect( token_owner ).setApprovalForAll( token_owner_address, true ) ).to.be.revertedWith( ERROR.IERC1155_APPROVE_CALLER )
-									})
-
-									describe( 'Allowing another user to trade owned tokens', () => {
-										beforeEach( async () => {
-											await contract.connect( token_owner ).setApprovalForAll( user1_address, true )
-										})
-
-										it( user1_name + ' should now be allowed to trade tokens owned by ' + token_owner_name, async () => {
-											expect( await contract.isApprovedForAll( token_owner_address, user1_address ) ).to.be.true
-										})
-
-										it( user1_name + ' can now transfer a token on behalf of ' + token_owner_name, async () => {
-											await contract.connect( user1 ).safeTransferFrom( token_owner_address, user1_address, contract_params.INIT_SERIES, 1, '0x' )
-											expect( await contract.balanceOf( token_owner_address, contract_params.INIT_SERIES ) ).to.equal( 0 )
-											expect( await contract.balanceOf( user1_address, contract_params.INIT_SERIES ) ).to.equal( 1 )
-										})
-									})
-								}
-							})
+								})
+							}
 						})
-
-						it( 'To non ERC1155Receiver contract should be reverted with ' + ERROR.IERC1155_NON_ERC1155_RECEIVER, async () => {
-							await expect( contract.connect( token_owner ).mint( contract_address, contract_params.INIT_SERIES, 1 ) ).to.be.revertedWith( ERROR.IERC1155_NON_ERC1155_RECEIVER )
-						})
-
-						it( 'To a valid ERC1155Receiver contract', async () => {
-							const holder = await holder_artifact.deploy( CST.INTERFACE_ID.IERC1155SingleReceiver, Error.None )
-							await contract.connect( token_owner ).mint( holder.address, contract_params.INIT_SERIES, 1 )
-							expect( await contract.balanceOf( holder.address, contract_params.INIT_SERIES ) ).to.equal( 1 )
-						})
-
-						describe( 'To a receiver contract returning unexpected value', function () {
-							it( 'Should be reverted with ' + ERROR.IERC1155_NON_ERC1155_RECEIVER, async function () {
-								const invalidReceiver = await holder_artifact.deploy( CST.INTERFACE_ID.IERC165, Error.None )
-								await expect( contract.connect( token_owner ).mint( invalidReceiver.address, contract_params.INIT_SERIES, 1 ) ).to.be.revertedWith( ERROR.IERC1155_NON_ERC1155_RECEIVER )
-							})
-						})
-
-						describe( 'To a receiver contract that reverts with error', function () {
-							it( 'Should be reverted with custom error', async function () {
-								const invalidReceiver = await holder_artifact.deploy( CST.INTERFACE_ID.IERC1155SingleReceiver, Error.RevertWithError )
-								await expect( contract.connect( token_owner ).mint( invalidReceiver.address, contract_params.INIT_SERIES, 1 ) ).to.be.revertedWith( 'custom error' )
-							})
-						})
-
-						describe( 'To a receiver contract that reverts with message', function () {
-							it( 'Should be reverted with ' + ERROR.IERC1155_NON_ERC1155_RECEIVER, async function () {
-								const invalidReceiver = await holder_artifact.deploy( CST.INTERFACE_ID.IERC1155SingleReceiver, Error.RevertWithMessage )
-								await expect( contract.connect( token_owner ).mint( invalidReceiver.address, contract_params.INIT_SERIES, 1 ) ).to.be.revertedWith( 'MockERC1155Receiver: reverting' )
-							})
-						})
-
-						describe( 'To a receiver contract that reverts without message', function () {
-							it( 'Should be reverted with ' + ERROR.IERC1155_NON_ERC1155_RECEIVER, async function () {
-								const invalidReceiver = await holder_artifact.deploy( CST.INTERFACE_ID.IERC1155SingleReceiver, Error.RevertWithoutMessage )
-								await expect( contract.connect( token_owner ).mint( invalidReceiver.address, contract_params.INIT_SERIES, 1 ) ).to.be.revertedWith( ERROR.IERC1155_NON_ERC1155_RECEIVER )
-							})
-						})
-
-						describe( 'To a receiver contract that panics', function () {
-							it( 'Should be reverted with ' + ERROR.PANIC, async function () {
-								const invalidReceiver = await holder_artifact.deploy( CST.INTERFACE_ID.IERC1155SingleReceiver, Error.Panic )
-								await expect( contract.connect( token_owner ).mint( invalidReceiver.address, contract_params.INIT_SERIES, 1 ) ).to.be.revertedWith( ERROR.PANIC )
-							})
-						})
-					}
+					})
 				})
 
 				describe( CONTRACT.METHODS.safeBatchTransferFrom.SIGNATURE, () => {
@@ -419,162 +358,99 @@ const shouldBehaveLikeERC1155Base = ( contract_name, contract_params ) => {
 					}
 				})
 
-				describe( CONTRACT.EVENTS.TransferBatch, () => {
-					if ( TEST.EVENTS.TransferBatch ) {
-						it( 'Contract should emit a ' + CONTRACT.EVENTS.TransferBatch + ' event mentioning a token from the series ' + contract_params.INIT_SERIES + ' was transfered from ' + CST.ADDRESS_ZERO + ' to ' + token_owner_name + ' by ' + token_owner_name, async () => {
-							await expect( contract.connect( token_owner ).batchMint( token_owner_address, [ contract_params.INIT_SERIES, contract_params.INIT_SERIES + 1 ], [ 1, 2 ] ) ).to.emit( contract, CONTRACT.EVENTS.TransferBatch ).withArgs( token_owner_address, CST.ADDRESS_ZERO, token_owner_address, [ contract_params.INIT_SERIES, contract_params.INIT_SERIES + 1 ], [ 1, 2 ] )
-						})
-					}
-				})
+				describe( 'After minting a batch', () => {
+					describe( CONTRACT.EVENTS.TransferBatch, () => {
+						if ( TEST.EVENTS.TransferBatch ) {
+							it( 'Contract should emit a ' + CONTRACT.EVENTS.TransferBatch + ' event mentioning a token from the series ' + contract_params.INIT_SERIES + ' was transfered from ' + CST.ADDRESS_ZERO + ' to ' + token_owner_name + ' by ' + token_owner_name, async () => {
+								await expect( contract.connect( token_owner ).batchMint( [ contract_params.INIT_SERIES ], [ 1 ] ) ).to.emit( contract, CONTRACT.EVENTS.TransferBatch ).withArgs( token_owner_address, CST.ADDRESS_ZERO, token_owner_address, [ contract_params.INIT_SERIES ], [ 1 ] )
+							})
+						}
+					})
 
-				describe( CONTRACT.METHODS.batchMint.SIGNATURE, () => {
-					if ( TEST.METHODS.batchMint ) {
-						it( 'Inputting different array legths should be reverted with ' + ERROR.IERC1155_ARRAY_LENGTH_MISMATCH, async () => {
-							await expect( contract.connect( token_owner ).batchMint( token_owner_address, [ contract_params.INIT_SERIES ], [ 1, 2 ] ) ).to.be.revertedWith( ERROR.IERC1155_ARRAY_LENGTH_MISMATCH )
-						})
-
-						it( 'To the null address should be reverted with ' + ERROR.IERC1155_NULL_ADDRESS_TRANSFER, async () => {
-							await expect( contract.connect( token_owner ).batchMint( CST.ADDRESS_ZERO, [ contract_params.INIT_SERIES ], [ 1 ] ) ).to.be.revertedWith( ERROR.IERC1155_NULL_ADDRESS_TRANSFER )
+					describe( 'Batch mint tokens from a couple of series', () => {
+						beforeEach( async () => {
+							await contract.connect( token_owner ).batchMint( [ contract_params.INIT_SERIES, contract_params.INIT_SERIES + 1 ], [ 1, 2 ] )
 						})
 
-						describe( CONTRACT.EVENTS.TransferBatch, () => {
-							if ( TEST.EVENTS.TransferBatch ) {
-								it( 'Contract should emit a ' + CONTRACT.EVENTS.TransferBatch + ' event mentioning a token from the series ' + contract_params.INIT_SERIES + ' was transfered from ' + CST.ADDRESS_ZERO + ' to ' + token_owner_name + ' by ' + token_owner_name, async () => {
-									await expect( contract.connect( token_owner ).batchMint( token_owner_address, [ contract_params.INIT_SERIES ], [ 1 ] ) ).to.emit( contract, CONTRACT.EVENTS.TransferBatch ).withArgs( token_owner_address, CST.ADDRESS_ZERO, token_owner_address, [ contract_params.INIT_SERIES ], [ 1 ] )
+						it( 'Balance of batch should be [ 1, 2 ]', async () => {
+							const balances = await contract.balanceOfBatch( [ token_owner_address, token_owner_address ], [ contract_params.INIT_SERIES, contract_params.INIT_SERIES + 1 ] )
+							expect( balances[ 0 ] ).to.equal( 1 )
+							expect( balances[ 1 ] ).to.equal( 2 )
+							expect( await contract.balanceOf( token_owner_address, contract_params.INIT_SERIES ) ).to.equal( 1 )
+							expect( await contract.balanceOf( token_owner_address, contract_params.INIT_SERIES + 1 ) ).to.equal( 2 )
+						})
+
+						describe( CONTRACT.METHODS.safeBatchTransferFrom.SIGNATURE, () => {
+							if ( TEST.METHODS.safeBatchTransferFrom ) {
+								it( 'Inputting different array legths should be reverted with ' + ERROR.IERC1155_ARRAY_LENGTH_MISMATCH, async () => {
+									await expect( contract.connect( token_owner ).safeBatchTransferFrom( token_owner_address, user1_address, [ contract_params.INIT_SERIES ], [ 1, 2 ], '0x' ) ).to.be.revertedWith( ERROR.IERC1155_ARRAY_LENGTH_MISMATCH )
+								})
+
+								it( 'Trying to transfer more tokens than owned should be reverted with ' + ERROR.IERC1155_INSUFFICIENT_BALANCE, async () => {
+									await expect( contract.connect( token_owner ).safeBatchTransferFrom( token_owner_address, user1_address, [ contract_params.INIT_SERIES ], [ 2 ], '0x' ) ).to.be.revertedWith( ERROR.IERC1155_INSUFFICIENT_BALANCE )
+								})
+
+								it( 'Trying to transfer tokens not owned should be reverted with ' + ERROR.IERC1155_CALLER_NOT_APPROVED, async () => {
+									await expect( contract.connect( user1 ).safeBatchTransferFrom( token_owner_address, user1_address, [ contract_params.INIT_SERIES ], [ 1 ], '0x' ) ).to.be.revertedWith( ERROR.IERC1155_CALLER_NOT_APPROVED )
+								})
+
+								describe( 'Transfer of a token owned', () => {
+									it( 'To the null address, should be reverted with ' + ERROR.IERC1155_NULL_ADDRESS_TRANSFER, async () => {
+										await expect( contract.connect( token_owner ).safeBatchTransferFrom( token_owner_address, CST.ADDRESS_ZERO, [ contract_params.INIT_SERIES ], [ 1 ], '0x' ) ).to.be.revertedWith( ERROR.IERC1155_NULL_ADDRESS_TRANSFER )
+									})
+
+									it( 'To non ERC1155Receiver contract, should be reverted with ' + ERROR.IERC1155_NON_ERC1155_RECEIVER, async () => {
+										await expect( contract.connect( token_owner ).safeBatchTransferFrom( token_owner_address, contract_address, [ contract_params.INIT_SERIES ], [ 1 ], '0x' ) ).to.be.revertedWith( ERROR.IERC1155_NON_ERC1155_RECEIVER )
+									})
+
+									it( 'Contract should emit a ' + CONTRACT.EVENTS.TransferBatch + ' event mentioning a token of the ' + [ contract_params.INIT_SERIES ] + ' series was transfered from ' + token_owner_name + ' to ' + user1_name + ' by ' + token_owner_name, async () => {
+										await expect( contract.connect( token_owner ).safeBatchTransferFrom( token_owner_address, user1_address, [ contract_params.INIT_SERIES ], [ 1 ], '0x' ) ).to.emit( contract, CONTRACT.EVENTS.TransferBatch ).withArgs( token_owner_address, token_owner_address, user1_address, [ contract_params.INIT_SERIES ], [ 1 ] )
+									})
+
+									it( 'To other user', async () => {
+										await contract.connect( token_owner ).safeBatchTransferFrom( token_owner_address, user1_address, [ contract_params.INIT_SERIES ], [ 1 ], '0x' )
+										expect( await contract.balanceOf( token_owner_address, [ contract_params.INIT_SERIES ] ) ).to.equal( 0 )
+										expect( await contract.balanceOf( user1_address, [ contract_params.INIT_SERIES ] ) ).to.equal( 1 )
+									})
+
+									describe( 'To a receiver contract returning unexpected value', function () {
+										it( 'Should be reverted with ' + ERROR.IERC1155_NON_ERC1155_RECEIVER, async function () {
+											const invalidReceiver = await holder_artifact.deploy( CST.INTERFACE_ID.IERC165, Error.None )
+											await expect( contract.connect( token_owner ).safeBatchTransferFrom( token_owner_address, invalidReceiver.address, [ contract_params.INIT_SERIES ], [ 1 ], '0x' ) ).to.be.revertedWith( ERROR.IERC1155_NON_ERC1155_RECEIVER )
+										})
+									})
+
+									describe( 'To a receiver contract that reverts with error', function () {
+										it( 'Should be reverted with custom error', async function () {
+											const invalidReceiver = await holder_artifact.deploy( CST.INTERFACE_ID.IERC1155BatchReceiver, Error.RevertWithError )
+											await expect( contract.connect( token_owner ).safeBatchTransferFrom( token_owner_address, invalidReceiver.address, [ contract_params.INIT_SERIES ], [ 1 ], '0x' ) ).to.be.revertedWith( 'custom error' )
+										})
+									})
+
+									describe( 'To a receiver contract that reverts with message', function () {
+										it( 'Should be reverted with ' + ERROR.IERC1155_NON_ERC1155_RECEIVER, async function () {
+											const invalidReceiver = await holder_artifact.deploy( CST.INTERFACE_ID.IERC1155BatchReceiver, Error.RevertWithMessage )
+											await expect( contract.connect( token_owner ).safeBatchTransferFrom( token_owner_address, invalidReceiver.address, [ contract_params.INIT_SERIES ], [ 1 ], '0x' ) ).to.be.revertedWith( 'Mock_ERC1155Receiver: reverting' )
+										})
+									})
+
+									describe( 'To a receiver contract that reverts without message', function () {
+										it( 'Should be reverted with ' + ERROR.IERC1155_NON_ERC1155_RECEIVER, async function () {
+											const invalidReceiver = await holder_artifact.deploy( CST.INTERFACE_ID.IERC1155BatchReceiver, Error.RevertWithoutMessage )
+											await expect( contract.connect( token_owner ).safeBatchTransferFrom( token_owner_address, invalidReceiver.address, [ contract_params.INIT_SERIES ], [ 1 ], '0x' ) ).to.be.revertedWith( ERROR.IERC1155_NON_ERC1155_RECEIVER )
+										})
+									})
+
+									describe( 'To a receiver contract that panics', function () {
+										it( 'Should be reverted with ' + ERROR.PANIC, async function () {
+											const invalidReceiver = await holder_artifact.deploy( CST.INTERFACE_ID.IERC1155BatchReceiver, Error.Panic )
+											await expect( contract.connect( token_owner ).safeBatchTransferFrom( token_owner_address, invalidReceiver.address, [ contract_params.INIT_SERIES ], [ 1 ], '0x' ) ).to.be.revertedWith( ERROR.PANIC )
+										})
+									})
 								})
 							}
 						})
-
-						describe( 'Batch mint tokens from a couple of series', () => {
-							beforeEach( async () => {
-								await contract.connect( token_owner ).batchMint( token_owner_address, [ contract_params.INIT_SERIES, contract_params.INIT_SERIES + 1 ], [ 1, 2 ] )
-							})
-
-							it( 'Balance of batch should be [ 1, 2 ]', async () => {
-								const balances = await contract.balanceOfBatch( [ token_owner_address, token_owner_address ], [ contract_params.INIT_SERIES, contract_params.INIT_SERIES + 1 ] )
-								expect( balances[ 0 ] ).to.equal( 1 )
-								expect( balances[ 1 ] ).to.equal( 2 )
-								expect( await contract.balanceOf( token_owner_address, contract_params.INIT_SERIES ) ).to.equal( 1 )
-								expect( await contract.balanceOf( token_owner_address, contract_params.INIT_SERIES + 1 ) ).to.equal( 2 )
-							})
-
-							describe( CONTRACT.METHODS.safeBatchTransferFrom.SIGNATURE, () => {
-								if ( TEST.METHODS.safeBatchTransferFrom ) {
-									it( 'Inputting different array legths should be reverted with ' + ERROR.IERC1155_ARRAY_LENGTH_MISMATCH, async () => {
-										await expect( contract.connect( token_owner ).safeBatchTransferFrom( token_owner_address, user1_address, [ contract_params.INIT_SERIES ], [ 1, 2 ], '0x' ) ).to.be.revertedWith( ERROR.IERC1155_ARRAY_LENGTH_MISMATCH )
-									})
-
-									it( 'Trying to transfer more tokens than owned should be reverted with ' + ERROR.IERC1155_INSUFFICIENT_BALANCE, async () => {
-										await expect( contract.connect( token_owner ).safeBatchTransferFrom( token_owner_address, user1_address, [ contract_params.INIT_SERIES ], [ 2 ], '0x' ) ).to.be.revertedWith( ERROR.IERC1155_INSUFFICIENT_BALANCE )
-									})
-
-									it( 'Trying to transfer tokens not owned should be reverted with ' + ERROR.IERC1155_CALLER_NOT_APPROVED, async () => {
-										await expect( contract.connect( user1 ).safeBatchTransferFrom( token_owner_address, user1_address, [ contract_params.INIT_SERIES ], [ 1 ], '0x' ) ).to.be.revertedWith( ERROR.IERC1155_CALLER_NOT_APPROVED )
-									})
-
-									describe( 'Transfer of a token owned', () => {
-										it( 'To the null address, should be reverted with ' + ERROR.IERC1155_NULL_ADDRESS_TRANSFER, async () => {
-											await expect( contract.connect( token_owner ).safeBatchTransferFrom( token_owner_address, CST.ADDRESS_ZERO, [ contract_params.INIT_SERIES ], [ 1 ], '0x' ) ).to.be.revertedWith( ERROR.IERC1155_NULL_ADDRESS_TRANSFER )
-										})
-
-										it( 'To non ERC1155Receiver contract, should be reverted with ' + ERROR.IERC1155_NON_ERC1155_RECEIVER, async () => {
-											await expect( contract.connect( token_owner ).safeBatchTransferFrom( token_owner_address, contract_address, [ contract_params.INIT_SERIES ], [ 1 ], '0x' ) ).to.be.revertedWith( ERROR.IERC1155_NON_ERC1155_RECEIVER )
-										})
-
-										it( 'Contract should emit a ' + CONTRACT.EVENTS.TransferBatch + ' event mentioning a token of the ' + [ contract_params.INIT_SERIES ] + ' series was transfered from ' + token_owner_name + ' to ' + user1_name + ' by ' + token_owner_name, async () => {
-											await expect( contract.connect( token_owner ).safeBatchTransferFrom( token_owner_address, user1_address, [ contract_params.INIT_SERIES ], [ 1 ], '0x' ) ).to.emit( contract, CONTRACT.EVENTS.TransferBatch ).withArgs( token_owner_address, token_owner_address, user1_address, [ contract_params.INIT_SERIES ], [ 1 ] )
-										})
-
-										it( 'To other user', async () => {
-											await contract.connect( token_owner ).safeBatchTransferFrom( token_owner_address, user1_address, [ contract_params.INIT_SERIES ], [ 1 ], '0x' )
-											expect( await contract.balanceOf( token_owner_address, [ contract_params.INIT_SERIES ] ) ).to.equal( 0 )
-											expect( await contract.balanceOf( user1_address, [ contract_params.INIT_SERIES ] ) ).to.equal( 1 )
-										})
-
-										describe( 'To a receiver contract returning unexpected value', function () {
-											it( 'Should be reverted with ' + ERROR.IERC1155_NON_ERC1155_RECEIVER, async function () {
-												const invalidReceiver = await holder_artifact.deploy( CST.INTERFACE_ID.IERC165, Error.None )
-												await expect( contract.connect( token_owner ).safeBatchTransferFrom( token_owner_address, invalidReceiver.address, [ contract_params.INIT_SERIES ], [ 1 ], '0x' ) ).to.be.revertedWith( ERROR.IERC1155_NON_ERC1155_RECEIVER )
-											})
-										})
-
-										describe( 'To a receiver contract that reverts with error', function () {
-											it( 'Should be reverted with custom error', async function () {
-												const invalidReceiver = await holder_artifact.deploy( CST.INTERFACE_ID.IERC1155BatchReceiver, Error.RevertWithError )
-												await expect( contract.connect( token_owner ).safeBatchTransferFrom( token_owner_address, invalidReceiver.address, [ contract_params.INIT_SERIES ], [ 1 ], '0x' ) ).to.be.revertedWith( 'custom error' )
-											})
-										})
-
-										describe( 'To a receiver contract that reverts with message', function () {
-											it( 'Should be reverted with ' + ERROR.IERC1155_NON_ERC1155_RECEIVER, async function () {
-												const invalidReceiver = await holder_artifact.deploy( CST.INTERFACE_ID.IERC1155BatchReceiver, Error.RevertWithMessage )
-												await expect( contract.connect( token_owner ).safeBatchTransferFrom( token_owner_address, invalidReceiver.address, [ contract_params.INIT_SERIES ], [ 1 ], '0x' ) ).to.be.revertedWith( 'MockERC1155Receiver: reverting' )
-											})
-										})
-
-										describe( 'To a receiver contract that reverts without message', function () {
-											it( 'Should be reverted with ' + ERROR.IERC1155_NON_ERC1155_RECEIVER, async function () {
-												const invalidReceiver = await holder_artifact.deploy( CST.INTERFACE_ID.IERC1155BatchReceiver, Error.RevertWithoutMessage )
-												await expect( contract.connect( token_owner ).safeBatchTransferFrom( token_owner_address, invalidReceiver.address, [ contract_params.INIT_SERIES ], [ 1 ], '0x' ) ).to.be.revertedWith( ERROR.IERC1155_NON_ERC1155_RECEIVER )
-											})
-										})
-
-										describe( 'To a receiver contract that panics', function () {
-											it( 'Should be reverted with ' + ERROR.PANIC, async function () {
-												const invalidReceiver = await holder_artifact.deploy( CST.INTERFACE_ID.IERC1155BatchReceiver, Error.Panic )
-												await expect( contract.connect( token_owner ).safeBatchTransferFrom( token_owner_address, invalidReceiver.address, [ contract_params.INIT_SERIES ], [ 1 ], '0x' ) ).to.be.revertedWith( ERROR.PANIC )
-											})
-										})
-									})
-								}
-							})
-						})
-
-						it( 'To non ERC1155Receiver contract should be reverted with ' + ERROR.IERC1155_NON_ERC1155_RECEIVER, async () => {
-							await expect( contract.connect( token_owner ).batchMint( contract_address, [ contract_params.INIT_SERIES ], [ 1 ] ) ).to.be.revertedWith( ERROR.IERC1155_NON_ERC1155_RECEIVER )
-						})
-
-						it( 'To a valid ERC1155Receiver contract', async () => {
-							const holder = await holder_artifact.deploy( CST.INTERFACE_ID.IERC1155BatchReceiver, Error.None )
-							await contract.connect( token_owner ).batchMint( holder.address, [ contract_params.INIT_SERIES ], [ 1 ] )
-							expect( await contract.balanceOf( holder.address, contract_params.INIT_SERIES ) ).to.equal( 1 )
-						})
-
-						describe( 'To a receiver contract returning unexpected value', function () {
-							it( 'Should be reverted with ' + ERROR.IERC1155_NON_ERC1155_RECEIVER, async function () {
-								const invalidReceiver = await holder_artifact.deploy( CST.INTERFACE_ID.IERC165, Error.None )
-								await expect( contract.connect( token_owner ).batchMint( invalidReceiver.address, [ contract_params.INIT_SERIES ], [ 1 ] ) ).to.be.revertedWith( ERROR.IERC1155_NON_ERC1155_RECEIVER )
-							})
-						})
-
-						describe( 'To a receiver contract that reverts with error', function () {
-							it( 'Should be reverted with custom error', async function () {
-								const invalidReceiver = await holder_artifact.deploy( CST.INTERFACE_ID.IERC1155BatchReceiver, Error.RevertWithError )
-								await expect( contract.connect( token_owner ).batchMint( invalidReceiver.address, [ contract_params.INIT_SERIES ], [ 1 ] ) ).to.be.revertedWith( 'custom error' )
-							})
-						})
-
-						describe( 'To a receiver contract that reverts with message', function () {
-							it( 'Should be reverted with ' + ERROR.IERC1155_NON_ERC1155_RECEIVER, async function () {
-								const invalidReceiver = await holder_artifact.deploy( CST.INTERFACE_ID.IERC1155BatchReceiver, Error.RevertWithMessage )
-								await expect( contract.connect( token_owner ).batchMint( invalidReceiver.address, [ contract_params.INIT_SERIES ], [ 1 ] ) ).to.be.revertedWith( 'MockERC1155Receiver: reverting' )
-							})
-						})
-
-						describe( 'To a receiver contract that reverts without message', function () {
-							it( 'Should be reverted with ' + ERROR.IERC1155_NON_ERC1155_RECEIVER, async function () {
-								const invalidReceiver = await holder_artifact.deploy( CST.INTERFACE_ID.IERC1155BatchReceiver, Error.RevertWithoutMessage )
-								await expect( contract.connect( token_owner ).batchMint( invalidReceiver.address, [ contract_params.INIT_SERIES ], [ 1 ] ) ).to.be.revertedWith( ERROR.IERC1155_NON_ERC1155_RECEIVER )
-							})
-						})
-
-						describe( 'To a receiver contract that panics', function () {
-							it( 'Should be reverted with ' + ERROR.PANIC, async function () {
-								const invalidReceiver = await holder_artifact.deploy( CST.INTERFACE_ID.IERC1155BatchReceiver, Error.Panic )
-								await expect( contract.connect( token_owner ).batchMint( invalidReceiver.address, [ contract_params.INIT_SERIES ], [ 1 ] ) ).to.be.revertedWith( ERROR.PANIC )
-							})
-						})
-					}
+					})
 				})
 			}
 		})
@@ -602,22 +478,6 @@ const shouldBehaveLikeERC1155Base = ( contract_name, contract_params ) => {
 						args : [
 							token_owner_address,
 							user1_address,
-						]
-					}
-					defaultArgs [ CONTRACT.METHODS.mint.SIGNATURE ] = {
-						err  : null,
-						args : [
-							token_owner_address,
-							contract_params.INIT_SERIES,
-							1,
-						]
-					}
-					defaultArgs [ CONTRACT.METHODS.batchMint.SIGNATURE ] = {
-						err  : null,
-						args : [
-							token_owner_address,
-							[ contract_params.INIT_SERIES ],
-							[ 1 ],
 						]
 					}
 					defaultArgs [ CONTRACT.METHODS.setApprovalForAll.SIGNATURE ] = {

@@ -33,7 +33,7 @@ abstract contract IOwnable {
 	/**
 	* @dev Initializes the contract setting the deployer as the initial owner.
 	*/
-	constructor() {
+	function _initIOwnable() internal {
 		_owner = msg.sender;
 	}
 

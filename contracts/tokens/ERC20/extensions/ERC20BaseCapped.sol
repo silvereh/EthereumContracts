@@ -16,13 +16,13 @@ abstract contract ERC20BaseCapped is ERC20Base {
 	error ERC20BaseCapped_INVALID_MAX_SUPPLY();
 	error ERC20BaseCapped_MAX_SUPPLY_EXCEEDED();
 
-	uint256 public immutable MAX_SUPPLY;
+	uint256 public MAX_SUPPLY;
 
 	/**
 	* @dev Sets the value of the `MAX_SUPPLY`. This value is immutable, it can only be
 	* set once during construction.
 	*/
-	constructor( uint256 maxSupply_ ) {
+	function _initERC20BaseCapped( uint256 maxSupply_ ) internal {
 		if ( maxSupply_ < 1 ) {
 			revert ERC20BaseCapped_INVALID_MAX_SUPPLY();
 		}
