@@ -68,11 +68,6 @@ abstract contract ERC721Map_Req is IERC165, IERC721 {
 		_;
 	}
 
-	modifier isValidOwner( address tokenOwner_ ) {
-		require ( tokenOwner_ != address( 0 ), 'IERC721_NULL_ADDRESS_BALANCE' );
-		_;
-	}
-
 	/**
 	* @dev See {IERC721-safeTransferFrom}.
 	*/
@@ -99,7 +94,11 @@ abstract contract ERC721Map_Req is IERC165, IERC721 {
 	* 
 	* Note: Prefer calling this function in view-only functions.  
 	*/
-	function balanceOf( address tokenOwner_ ) public view virtual override isValidOwner( tokenOwner_ ) returns ( uint256 ) {
+	function balanceOf( address tokenOwner_ ) public view virtual override returns ( uint256 ) {
+		if ( tokenOwner_ == address( 0 ) ) {
+			return 0;
+		}
+
 		uint256 _count_ = 0;
 		for ( uint256 i = 0; i < _tokenIds; i++ ) {
 			if ( tokenOwner_ == _owners[ i ] ) {

@@ -4,11 +4,10 @@ const chaiAsPromised = require( 'chai-as-promised' )
 chai.use( chaiAsPromised )
 
 const expect = chai.expect ;
-const { ethers } = require( 'hardhat' )
+const { ethers, waffle } = require( 'hardhat' )
+const { loadFixture } = waffle
 
-const { shouldBehaveLikeERC1155Base } = require( './ERC1155Base.behavior' )
-const { getTestCasesByFunction, generateFailTest, generateTestCase } = require( '../fail-test-module' )
-const { deployContract } = require( '../contract-deployment-module' )
+const { getTestCasesByFunction, generateTestCase } = require( '../fail-test-module' )
 
 const {
 	contract_deployer_name,
@@ -34,7 +33,6 @@ const TEST = {
 	USE_CASES : {
 		CORRECT_INPUT : true,
 		INVALID_INPUT : true,
-		ERC1155_BASE  : true,
 	},
 }
 
@@ -56,37 +54,37 @@ const CONTRACT = {
 	},
 }
 
-const shouldBehaveLikeERC1155BaseBurnable = ( contract_name, contract_params ) => {
-	if ( TEST.USE_CASES.ERC1155_BASE ) {
-		shouldBehaveLikeERC1155Base( contract_name, contract_params )
-	}
-
-	describe( 'Should behave like ERC1155BaseBurnable', () => {
+const shouldBehaveLikeERC1155BaseBurnable = function( fixture, contract_params ) {
+	describe( 'Should behave like ERC1155BaseBurnable', function() {
 		let contract_deployer_address
-		let token_owner_address
-		let proxy_user_address
-		let wl_user1_address
-		let wl_user2_address
-		let user1_address
-		let user2_address
-
 		let contract_deployer
+
+		let token_owner_address
 		let token_owner
+
+		let proxy_user_address
 		let proxy_user
+
+		let wl_user1_address
 		let wl_user1
+
+		let wl_user2_address
 		let wl_user2
+
+		let contract_address
+		let contract
+
+		let user1_address
 		let user1
+
+		let user2_address
 		let user2
 
 		let addrs
 
-		let contract
-		let contract_address
-		let contract_artifact
-
-		before( async () => {
+		before( async function() {
 			[
-				contract_deployer,
+				x,
 				token_owner,
 				proxy_user,
 				wl_user1,
@@ -96,44 +94,45 @@ const shouldBehaveLikeERC1155BaseBurnable = ( contract_name, contract_params ) =
 				...addrs
 			] = await ethers.getSigners()
 
-			contract_deployer_address = contract_deployer.address
 			token_owner_address = token_owner.address
 			proxy_user_address = proxy_user.address
 			wl_user1_address = wl_user1.address
 			wl_user2_address = wl_user2.address
 			user1_address = user1.address
 			user2_address = user2.address
-
-			contract_artifact = await ethers.getContractFactory( contract_name )
 		})
 
-		beforeEach( async () => {
-			contract = await deployContract( contract_artifact, contract_params.CONSTRUCT )
-			contract_address = contract.address
+		beforeEach( async function() {
+			const { test_contract, test_contract_deployer } = await loadFixture( fixture )
+			contract = test_contract
+			contract_deployer = test_contract_deployer
+			contract_deployer_address = test_contract_deployer.address
+			contract_address = test_contract.address
 		})
 
-		describe( 'Correct input ...', () => {
+
+		describe( 'Correct input ...', function() {
 			if ( TEST.USE_CASES.CORRECT_INPUT ) {
-				describe( CONTRACT.METHODS.burnFrom.SIGNATURE, () => {
+				describe( CONTRACT.METHODS.burnFrom.SIGNATURE, function() {
 					if ( TEST.METHODS.burnFrom ) {
-						it( 'Trying to burn a token from a series not minted should be reverted with ' + ERROR.IERC1155_INSUFFICIENT_BALANCE, async () => {
+						it( 'Trying to burn a token from a series not minted should be reverted with ' + ERROR.IERC1155_INSUFFICIENT_BALANCE, async function() {
 							await expect( contract.connect( token_owner ).burnFrom( token_owner_address, contract_params.INIT_SERIES, 1 ) ).to.be.revertedWith( ERROR.IERC1155_INSUFFICIENT_BALANCE )
 						})
 
-						describe( 'When a series has been minted', () => {
-							beforeEach( async () => {
+						describe( 'When a series has been minted', function() {
+							beforeEach( async function() {
 								await contract.connect( token_owner ).mint( contract_params.INIT_SERIES, 1 )
 							})
 
-							it( 'Trying to burn more tokens than owned should be reverted with ' + ERROR.IERC1155_INSUFFICIENT_BALANCE, async () => {
+							it( 'Trying to burn more tokens than owned should be reverted with ' + ERROR.IERC1155_INSUFFICIENT_BALANCE, async function() {
 								await expect( contract.connect( token_owner ).burnFrom( token_owner_address, contract_params.INIT_SERIES, 2 ) ).to.be.revertedWith( ERROR.IERC1155_INSUFFICIENT_BALANCE )
 							})
 
-							it( 'Contract should emit a ' + CONTRACT.EVENTS.TransferSingle + ' event mentioning a token from the series ' + contract_params.INIT_SERIES + ' was transfered from ' + token_owner_name + ' to the null address by ' + token_owner_name, async () => {
+							it( 'Contract should emit a ' + CONTRACT.EVENTS.TransferSingle + ' event mentioning a token from the series ' + contract_params.INIT_SERIES + ' was transfered from ' + token_owner_name + ' to the null address by ' + token_owner_name, async function() {
 								await expect( contract.connect( token_owner ).burnFrom( token_owner_address, contract_params.INIT_SERIES, 1 ) ).to.emit( contract, CONTRACT.EVENTS.TransferSingle ).withArgs( token_owner_address, token_owner_address, CST.ADDRESS_ZERO, contract_params.INIT_SERIES, 1 )
 							})
 
-							it( 'Balance of ' + token_owner_name + ' for series ' + contract_params.INIT_SERIES + ' should be 0', async () => {
+							it( 'Balance of ' + token_owner_name + ' for series ' + contract_params.INIT_SERIES + ' should be 0', async function() {
 								await contract.connect( token_owner ).burnFrom( token_owner_address, contract_params.INIT_SERIES, 1 )
 								expect( await contract.balanceOf( token_owner_address, contract_params.INIT_SERIES ) ).to.equal( 0 )
 							})
@@ -141,30 +140,30 @@ const shouldBehaveLikeERC1155BaseBurnable = ( contract_name, contract_params ) =
 					}
 				})
 
-				describe( CONTRACT.METHODS.batchBurnFrom.SIGNATURE, () => {
+				describe( CONTRACT.METHODS.batchBurnFrom.SIGNATURE, function() {
 					if ( TEST.METHODS.batchBurnFrom ) {
-						it( 'Inputting different array legths should be reverted with ' + ERROR.IERC1155_ARRAY_LENGTH_MISMATCH, async () => {
+						it( 'Inputting different array legths should be reverted with ' + ERROR.IERC1155_ARRAY_LENGTH_MISMATCH, async function() {
 							await expect( contract.connect( token_owner ).batchBurnFrom( token_owner_address, [ contract_params.INIT_SERIES ], [ 1, 2 ] ) ).to.be.revertedWith( ERROR.IERC1155_ARRAY_LENGTH_MISMATCH )
 						})
 
-						it( 'Trying to burn tokens from series not minted should be reverted with ' + ERROR.IERC1155_INSUFFICIENT_BALANCE, async () => {
+						it( 'Trying to burn tokens from series not minted should be reverted with ' + ERROR.IERC1155_INSUFFICIENT_BALANCE, async function() {
 							await expect( contract.connect( token_owner ).batchBurnFrom( token_owner_address, [ contract_params.INIT_SERIES ], [ 1 ] ) ).to.be.revertedWith( ERROR.IERC1155_INSUFFICIENT_BALANCE )
 						})
 
-						describe( 'When series have been minted', () => {
-							beforeEach( async () => {
+						describe( 'When series have been minted', function() {
+							beforeEach( async function() {
 								await contract.connect( token_owner ).batchMint( [ contract_params.INIT_SERIES ], [ 1 ] )
 							})
 
-							it( 'Trying to burn more tokens than owned should be reverted with ' + ERROR.IERC1155_INSUFFICIENT_BALANCE, async () => {
+							it( 'Trying to burn more tokens than owned should be reverted with ' + ERROR.IERC1155_INSUFFICIENT_BALANCE, async function() {
 								await expect( contract.connect( token_owner ).batchBurnFrom( token_owner_address, [ contract_params.INIT_SERIES ], [ 2 ] ) ).to.be.revertedWith( ERROR.IERC1155_INSUFFICIENT_BALANCE )
 							})
 
-							it( 'Contract should emit a ' + CONTRACT.EVENTS.TransferBatch + ' event mentioning a token from the series ' + contract_params.INIT_SERIES + ' was transfered from ' + token_owner_name + ' to the null address by ' + token_owner_name, async () => {
+							it( 'Contract should emit a ' + CONTRACT.EVENTS.TransferBatch + ' event mentioning a token from the series ' + contract_params.INIT_SERIES + ' was transfered from ' + token_owner_name + ' to the null address by ' + token_owner_name, async function() {
 								await expect( contract.connect( token_owner ).batchBurnFrom( token_owner_address, [ contract_params.INIT_SERIES ], [ 1 ] ) ).to.emit( contract, CONTRACT.EVENTS.TransferBatch ).withArgs( token_owner_address, token_owner_address, CST.ADDRESS_ZERO, [ contract_params.INIT_SERIES ], [ 1 ] )
 							})
 
-							it( 'Balance of ' + token_owner_name + ' for series ' + contract_params.INIT_SERIES + ' should be 0', async () => {
+							it( 'Balance of ' + token_owner_name + ' for series ' + contract_params.INIT_SERIES + ' should be 0', async function() {
 								await contract.connect( token_owner ).batchBurnFrom( token_owner_address, [ contract_params.INIT_SERIES ], [ 1 ] )
 								expect( await contract.balanceOf( token_owner_address, contract_params.INIT_SERIES ) ).to.equal( 0 )
 							})
@@ -174,9 +173,9 @@ const shouldBehaveLikeERC1155BaseBurnable = ( contract_name, contract_params ) =
 			}
 		})
 
-		describe( 'Invalid input ...', () => {
+		describe( 'Invalid input ...', function() {
 			if ( TEST.USE_CASES.INVALID_INPUT ) {
-				beforeEach( async () => {
+				beforeEach( async function() {
 					defaultArgs = {}
 					defaultArgs [ CONTRACT.METHODS.burnFrom.SIGNATURE ] = {
 						err  : null,
@@ -196,12 +195,12 @@ const shouldBehaveLikeERC1155BaseBurnable = ( contract_name, contract_params ) =
 					}
 				})
 
-				Object.entries( CONTRACT.METHODS ).forEach( ( [ prop, val ] ) => {
-					describe( val.SIGNATURE, () => {
+				Object.entries( CONTRACT.METHODS ).forEach( function( [ prop, val ] ) {
+					describe( val.SIGNATURE, function() {
 						const testSuite = getTestCasesByFunction( val.SIGNATURE, val.PARAMS )
 
 						testSuite.forEach( testCase => {
-							it( testCase.test_description, async () => {
+							it( testCase.test_description, async function() {
 								await generateTestCase( contract, testCase, defaultArgs, prop, val )
 							})
 						})

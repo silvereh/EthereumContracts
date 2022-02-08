@@ -4,11 +4,10 @@ const chaiAsPromised = require( 'chai-as-promised' )
 chai.use( chaiAsPromised )
 
 const expect = chai.expect ;
-const { ethers } = require( 'hardhat' )
+const { ethers, waffle } = require( 'hardhat' )
+const { loadFixture } = waffle
 
-const { shouldBehaveLikeERC20Base } = require( './ERC20Base.behavior' )
 const { getTestCasesByFunction, generateTestCase } = require( '../fail-test-module' )
-const { deployContract } = require( '../contract-deployment-module' )
 
 const {
 	contract_deployer_name,
@@ -58,35 +57,37 @@ const CONTRACT = {
 	},
 }
 
-const shouldBehaveLikeERC20BaseMetadata = ( contract_name, contract_params ) => {
-	shouldBehaveLikeERC20Base( contract_name, contract_params )
-
-	describe( 'Should behave like ERC20BaseMetadata', () => {
+const shouldBehaveLikeERC20BaseMetadata = function( fixture, contract_params ) {
+	describe( 'Should behave like ERC20BaseMetadata', function() {
 		let contract_deployer_address
-		let token_owner_address
-		let proxy_user_address
-		let wl_user1_address
-		let wl_user2_address
-		let user1_address
-		let user2_address
-
 		let contract_deployer
+
+		let token_owner_address
 		let token_owner
+
+		let proxy_user_address
 		let proxy_user
+
+		let wl_user1_address
 		let wl_user1
+
+		let wl_user2_address
 		let wl_user2
+
+		let contract_address
+		let contract
+
+		let user1_address
 		let user1
+
+		let user2_address
 		let user2
 
 		let addrs
 
-		let contract
-		let contract_address
-		let contract_artifact
-
-		before( async () => {
+		before( async function() {
 			[
-				contract_deployer,
+				x,
 				token_owner,
 				proxy_user,
 				wl_user1,
@@ -96,43 +97,44 @@ const shouldBehaveLikeERC20BaseMetadata = ( contract_name, contract_params ) => 
 				...addrs
 			] = await ethers.getSigners()
 
-			contract_deployer_address = contract_deployer.address
 			token_owner_address = token_owner.address
 			proxy_user_address = proxy_user.address
 			wl_user1_address = wl_user1.address
 			wl_user2_address = wl_user2.address
 			user1_address = user1.address
 			user2_address = user2.address
-
-			contract_artifact = await ethers.getContractFactory( contract_name )
 		})
 
-		beforeEach( async () => {
-			contract = await deployContract( contract_artifact, contract_params.CONSTRUCT )
-			contract_address = contract.address
+		beforeEach( async function() {
+			const { test_contract, test_contract_deployer } = await loadFixture( fixture )
+			contract = test_contract
+			contract_deployer = test_contract_deployer
+			contract_deployer_address = test_contract_deployer.address
+			contract_address = test_contract.address
 		})
 
-		describe( 'Correct input ...', () => {
+
+		describe( 'Correct input ...', function() {
 			if ( TEST.USE_CASES.CORRECT_INPUT ) {
-				describe( CONTRACT.METHODS.name.SIGNATURE, () => {
+				describe( CONTRACT.METHODS.name.SIGNATURE, function() {
 					if ( TEST.METHODS.name ) {
-						it( 'Token name should be ' + contract_params.CONSTRUCT[ 0 ], async () => {
-							expect( await contract.name() ).to.equal( contract_params.CONSTRUCT[ 0 ] )
+						it( 'Token name should be ' + contract_params.CONSTRUCT.name_, async function() {
+							expect( await contract.name() ).to.equal( contract_params.CONSTRUCT.name_ )
 						})
 					}
 				})
 
-				describe( CONTRACT.METHODS.symbol.SIGNATURE, () => {
+				describe( CONTRACT.METHODS.symbol.SIGNATURE, function() {
 					if ( TEST.METHODS.symbol ) {
-						it( 'Token symbol should be ' + contract_params.CONSTRUCT[ 1 ], async () => {
-							expect( await contract.symbol() ).to.equal( contract_params.CONSTRUCT[ 1 ] )
+						it( 'Token symbol should be ' + contract_params.CONSTRUCT.symbol_, async function() {
+							expect( await contract.symbol() ).to.equal( contract_params.CONSTRUCT.symbol_ )
 						})
 					}
 				})
 
-				describe( CONTRACT.METHODS.decimals.SIGNATURE, () => {
+				describe( CONTRACT.METHODS.decimals.SIGNATURE, function() {
 					if ( TEST.METHODS.decimals ) {
-						it( 'Token decimals should be 18', async () => {
+						it( 'Token decimals should be 18', async function() {
 							expect( await contract.decimals() ).to.equal( 18 )
 						})
 					}
@@ -140,9 +142,9 @@ const shouldBehaveLikeERC20BaseMetadata = ( contract_name, contract_params ) => 
 			}
 		})
 
-		describe( 'Invalid input ...', () => {
+		describe( 'Invalid input ...', function() {
 			if ( TEST.USE_CASES.INVALID_INPUT ) {
-				beforeEach( async () => {
+				beforeEach( async function() {
 					defaultArgs = {}
 					defaultArgs [ CONTRACT.METHODS.name.SIGNATURE ] = {
 						err  : null,
@@ -158,12 +160,12 @@ const shouldBehaveLikeERC20BaseMetadata = ( contract_name, contract_params ) => 
 					}
 				})
 
-				Object.entries( CONTRACT.METHODS ).forEach( ( [ prop, val ] ) => {
-					describe( val.SIGNATURE, () => {
+				Object.entries( CONTRACT.METHODS ).forEach( function( [ prop, val ] ) {
+					describe( val.SIGNATURE, function() {
 						const testSuite = getTestCasesByFunction( val.SIGNATURE, val.PARAMS )
 
 						testSuite.forEach( testCase => {
-							it( testCase.test_description, async () => {
+							it( testCase.test_description, async function() {
 								await generateTestCase( contract, testCase, defaultArgs, prop, val )
 							})
 						})

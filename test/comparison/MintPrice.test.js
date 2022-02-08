@@ -5,6 +5,7 @@ chai.use( chaiAsPromised )
 
 const expect = chai.expect
 const { ethers } = require( 'hardhat' )
+
 const { TEST_ACTIVATION } = require( '../test-activation-module' )
 const { deployContract } = require( '../contract-deployment-module' )
 
@@ -46,7 +47,7 @@ const CONTRACTS = [
 ]
 
 const mintingBehavior = ( contract_name, contract_max ) => {
-	describe( contract_name, () => {
+	describe( contract_name, function() {
 		let contract_deployer_address
 		let token_owner_address
 
@@ -59,7 +60,7 @@ const mintingBehavior = ( contract_name, contract_max ) => {
 		let contract_address
 		let contract_artifact
 
-		before( async () => {
+		before( async function() {
 			[
 				contract_deployer,
 				token_owner,
@@ -72,33 +73,33 @@ const mintingBehavior = ( contract_name, contract_max ) => {
 			contract_artifact = await ethers.getContractFactory( contract_name )
 		})
 
-		beforeEach( async () => {
+		beforeEach( async function() {
 			const params = []
-			contract = await deployContract( contract_artifact, params )
+			contract = await deployContract( contract_artifact, false, params )
 			contract_address = contract.address
 		})
 
-		it( 'Mint a single token', async () => {
+		it( 'Mint a single token', async function() {
 			await contract.connect( token_owner ).mint_01()
 			expect( await contract.balanceOf( token_owner_address ) ).to.equal( 1 )
 		})
 
-		it( 'Mint 5 tokens', async () => {
+		it( 'Mint 5 tokens', async function() {
 			await contract.connect( token_owner ).mint_05()
 			expect( await contract.balanceOf( token_owner_address ) ).to.equal( 5 )
 		})
 
-		it( 'Mint 20 tokens', async () => {
+		it( 'Mint 20 tokens', async function() {
 			await contract.connect( token_owner ).mint_20()
 			expect( await contract.balanceOf( token_owner_address ) ).to.equal( 20 )
 		})
 
-		it( 'Mint ' + contract_max + ' tokens', async () => {
+		it( 'Mint ' + contract_max + ' tokens', async function() {
 			await contract.connect( token_owner ).mint_Max( contract_max )
 			expect( await contract.balanceOf( token_owner_address ) ).to.equal( contract_max )
 		})
 
-		it( 'Mint ' + ( contract_max + 1 ) + ' tokens should run out of gas', async () => {
+		it( 'Mint ' + ( contract_max + 1 ) + ' tokens should run out of gas', async function() {
 			await expect( contract.connect( token_owner ).mint_Max( contract_max + 1 ) ).to.be.rejectedWith( THROW.OUT_OF_GAS )
 		})
 	})

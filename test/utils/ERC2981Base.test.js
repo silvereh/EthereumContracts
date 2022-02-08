@@ -1,5 +1,11 @@
+const { ethers, waffle } = require( 'hardhat' )
+
+const { deployContract } = waffle
+
+const ARTIFACT = require( '../../artifacts/contracts/mocks/utils/Mock_ERC2981Base.sol/Mock_ERC2981Base.json' )
+
 const { TEST_ACTIVATION } = require( '../test-activation-module' )
-const { shouldBehaveLikeERC2981 } = require( './ERC2981Base.behavior' )
+const { shouldBehaveLikeERC2981 } = require( './behavior.ERC2981Base' )
 
 // For activating or de-activating test cases
 const TEST = {
@@ -10,14 +16,29 @@ const TEST = {
 const CONTRACT = {
 	NAME : 'Mock_ERC2981Base',
 	PARAMS : {
-		CONSTRUCT    : [],
-		ROYALTY_RATE : 1000,
+		CONSTRUCT : {
+			royaltyRate_ : 1000
+		},
 		ROYALTY_BASE : 10000,
 	},
 }
 
-describe( TEST.NAME, () => {
+async function fixture() {
+	[
+		test_contract_deployer,
+		...addrs
+	] = await ethers.getSigners()
+
+	const params = [
+		test_contract_deployer.address,
+		CONTRACT.PARAMS.CONSTRUCT.royaltyRate_
+	]
+	let test_contract = await deployContract( test_contract_deployer, ARTIFACT, params )
+	return { test_contract, test_contract_deployer }
+}
+
+describe( TEST.NAME, function() {
 	if ( TEST_ACTIVATION[ TEST.NAME ] ) {
-		shouldBehaveLikeERC2981( CONTRACT.NAME, CONTRACT.PARAMS )
+		shouldBehaveLikeERC2981( fixture, CONTRACT.PARAMS )
 	}
 })

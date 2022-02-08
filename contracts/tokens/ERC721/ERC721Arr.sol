@@ -103,11 +103,7 @@ abstract contract ERC721Arr is IERC165, IERC721 {
 	/**
 	* @dev See {IERC721-approve}.
 	*/
-	function approve( address to_, uint256 tokenId_ ) public virtual override exists( tokenId_ ) {
-		if ( ! _isApprovedOrOwner( msg.sender, tokenId_ ) ) {
-			revert IERC721_CALLER_NOT_APPROVED();
-		}
-
+	function approve( address to_, uint256 tokenId_ ) public virtual override exists( tokenId_ ) isApprovedOrOwner( msg.sender, tokenId_ ) {
 		address _tokenOwner_ = _owners[ tokenId_ ];
 		if ( to_ == _tokenOwner_ ) {
 			revert IERC721_APPROVE_OWNER();
@@ -123,11 +119,7 @@ abstract contract ERC721Arr is IERC165, IERC721 {
 	* Note: We can ignore `from_` as we can compare everything to the actual token owner, 
 	* but we cannot remove this parameter to stay in conformity with IERC721
 	*/
-	function safeTransferFrom( address from_, address to_, uint256 tokenId_ ) public virtual override exists( tokenId_ ) {
-		if ( ! _isApprovedOrOwner( msg.sender, tokenId_ ) ) {
-			revert IERC721_CALLER_NOT_APPROVED();
-		}
-
+	function safeTransferFrom( address from_, address to_, uint256 tokenId_ ) public virtual override exists( tokenId_ ) isApprovedOrOwner( msg.sender, tokenId_ ) {
 		if ( to_ == address( 0 ) ) {
 			revert IERC721_NULL_ADDRESS_TRANSFER();
 		}
@@ -147,11 +139,7 @@ abstract contract ERC721Arr is IERC165, IERC721 {
 	* Note: We can ignore `from_` as we can compare everything to the actual token owner, 
 	* but we cannot remove this parameter to stay in conformity with IERC721
 	*/
-	function safeTransferFrom( address from_, address to_, uint256 tokenId_, bytes memory data_ ) public virtual override exists( tokenId_ ) {
-		if ( ! _isApprovedOrOwner( msg.sender, tokenId_ ) ) {
-			revert IERC721_CALLER_NOT_APPROVED();
-		}
-
+	function safeTransferFrom( address from_, address to_, uint256 tokenId_, bytes memory data_ ) public virtual override exists( tokenId_ ) isApprovedOrOwner( msg.sender, tokenId_ ) {
 		if ( to_ == address( 0 ) ) {
 			revert IERC721_NULL_ADDRESS_TRANSFER();
 		}
@@ -183,11 +171,7 @@ abstract contract ERC721Arr is IERC165, IERC721 {
 	* Note: We can ignore `from_` as we can compare everything to the actual token owner, 
 	* but we cannot remove this parameter to stay in conformity with IERC721
 	*/
-	function transferFrom( address from_, address to_, uint256 tokenId_ ) public virtual override exists( tokenId_ ) {
-		if ( ! _isApprovedOrOwner( msg.sender, tokenId_ ) ) {
-			revert IERC721_CALLER_NOT_APPROVED();
-		}
-
+	function transferFrom( address from_, address to_, uint256 tokenId_ ) public virtual override exists( tokenId_ ) isApprovedOrOwner( msg.sender, tokenId_ ) {
 		if ( to_ == address( 0 ) ) {
 			revert IERC721_NULL_ADDRESS_TRANSFER();
 		}

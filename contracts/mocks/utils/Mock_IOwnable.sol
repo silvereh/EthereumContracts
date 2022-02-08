@@ -6,6 +6,6 @@ import "../../utils/IOwnable.sol";
 
 contract Mock_IOwnable is IOwnable {
 	constructor() {
-		_initIOwnable();
+		_initIOwnable( msg.sender );
 	}
 }

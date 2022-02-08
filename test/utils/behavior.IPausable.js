@@ -4,10 +4,10 @@ const chaiAsPromised = require( 'chai-as-promised' )
 chai.use( chaiAsPromised )
 
 const expect = chai.expect ;
-const { ethers } = require( 'hardhat' )
+const { ethers, waffle } = require( 'hardhat' )
+const { loadFixture } = waffle
 
-const { getTestCasesByFunction, generateFailTest, generateTestCase } = require( '../fail-test-module' )
-const { deployContract } = require( '../contract-deployment-module' )
+const { getTestCasesByFunction, generateTestCase } = require( '../fail-test-module' )
 
 const {
 	contract_deployer_name,
@@ -75,33 +75,37 @@ const SALE_STATE = {
 	SALE        : 2,
 }
 
-const shouldBehaveLikeIPausable = ( contract_name, contract_params ) => {
-	describe( 'Should behave like IPausable', () => {
+const shouldBehaveLikeIPausable = ( fixture, contract_name ) => {
+	describe( 'Should behave like IPausable', function() {
 		let contract_deployer_address
-		let token_owner_address
-		let proxy_user_address
-		let wl_user1_address
-		let wl_user2_address
-		let user1_address
-		let user2_address
-
 		let contract_deployer
+
+		let token_owner_address
 		let token_owner
+
+		let proxy_user_address
 		let proxy_user
+
+		let wl_user1_address
 		let wl_user1
+
+		let wl_user2_address
 		let wl_user2
+
+		let contract_address
+		let contract
+
+		let user1_address
 		let user1
+
+		let user2_address
 		let user2
 
 		let addrs
 
-		let contract
-		let contract_address
-		let contract_artifact
-
-		before( async () => {
+		before( async function() {
 			[
-				contract_deployer,
+				x,
 				token_owner,
 				proxy_user,
 				wl_user1,
@@ -111,70 +115,70 @@ const shouldBehaveLikeIPausable = ( contract_name, contract_params ) => {
 				...addrs
 			] = await ethers.getSigners()
 
-			contract_deployer_address = contract_deployer.address
 			token_owner_address = token_owner.address
 			proxy_user_address = proxy_user.address
 			wl_user1_address = wl_user1.address
 			wl_user2_address = wl_user2.address
 			user1_address = user1.address
 			user2_address = user2.address
-
-			contract_artifact = await ethers.getContractFactory( contract_name )
 		})
 
-		beforeEach( async () => {
-			contract = await deployContract( contract_artifact, contract_params.CONSTRUCT )
-			contract_address = contract.address
+		beforeEach( async function() {
+			const { test_contract, test_contract_deployer } = await loadFixture( fixture )
+			contract = test_contract
+			contract_deployer = test_contract_deployer
+			contract_deployer_address = test_contract_deployer.address
+			contract_address = test_contract.address
 		})
 
-		describe( 'Correct input ...', () => {
+		describe( 'Correct input ...', function() {
 			if ( TEST.USE_CASES.CORRECT_INPUT ) {
-				describe( 'Default sale state is CLOSED', () => {
-					describe( CONTRACT.METHODS.saleState.SIGNATURE, () => {
+				describe( 'Default sale state is CLOSED', function() {
+					describe( CONTRACT.METHODS.saleState.SIGNATURE, function() {
 						if ( TEST.METHODS.saleState ) {
-							it( 'Should be ' + SALE_STATE.CLOSED, async () => {
+							it( 'Should be ' + SALE_STATE.CLOSED, async function() {
 								expect( await contract.saleState() ).to.equal( SALE_STATE.CLOSED )
 							})
 						}
 					})
 
-					describe( CONTRACT.METHODS.saleIsClosed.SIGNATURE, () => {
+					describe( CONTRACT.METHODS.saleIsClosed.SIGNATURE, function() {
 						if ( TEST.METHODS.saleIsClosed ) {
-							it( 'Should be true', async () => {
+							it( 'Should be true', async function() {
 								expect( await contract.saleIsClosed() ).to.be.true
 							})
 						}
 					})
 
-					describe( CONTRACT.METHODS.presaleIsOpen.SIGNATURE, () => {
+					describe( CONTRACT.METHODS.presaleIsOpen.SIGNATURE, function() {
 						if ( TEST.METHODS.presaleIsOpen ) {
-							it( 'Should be reverted with ' + ERROR.IPausable_PRESALE_CLOSED, async () => {
+							it( 'Should be reverted with ' + ERROR.IPausable_PRESALE_CLOSED, async function() {
 								await expect( contract.presaleIsOpen() ).to.be.revertedWith( ERROR.IPausable_PRESALE_CLOSED )
 							})
 						}
 					})
 
-					describe( CONTRACT.METHODS.saleIsOpen.SIGNATURE, () => {
+					describe( CONTRACT.METHODS.saleIsOpen.SIGNATURE, function() {
 						if ( TEST.METHODS.saleIsOpen ) {
-							it( 'Should be reverted with ' + ERROR.IPausable_SALE_CLOSED, async () => {
+							it( 'Should be reverted with ' + ERROR.IPausable_SALE_CLOSED, async function() {
 								await expect( contract.saleIsOpen() ).to.be.revertedWith( ERROR.IPausable_SALE_CLOSED )
 							})
 						}
 					})
 				})
 
-				describe( CONTRACT.METHODS.setSaleState.SIGNATURE, () => {
-					describe( CONTRACT.EVENTS.SaleStateChanged, () => {
+				describe( CONTRACT.METHODS.setSaleState.SIGNATURE, function() {
+					describe( CONTRACT.EVENTS.SaleStateChanged, function() {
 						if ( TEST.EVENTS.SaleStateChanged ) {
-							it( 'Contract should emit a "' + CONTRACT.EVENTS.SaleStateChanged + '" event mentioning the old statse is CLOSED and the new state is PRESALE', async () => {
+							it( 'Contract should emit a "' + CONTRACT.EVENTS.SaleStateChanged + '" event mentioning the old statse is CLOSED and the new state is PRESALE', async function() {
 								await expect( contract.connect( contract_deployer ).setSaleState( SALE_STATE.PRESALE ) ).to.emit( contract, CONTRACT.EVENTS.SaleStateChanged ).withArgs( SALE_STATE.CLOSED, SALE_STATE.PRESALE )
 							})
 
-							it( 'Contract should emit a "' + CONTRACT.EVENTS.SaleStateChanged + '" event mentioning the old statse is CLOSED and the new state is SALE', async () => {
+							it( 'Contract should emit a "' + CONTRACT.EVENTS.SaleStateChanged + '" event mentioning the old statse is CLOSED and the new state is SALE', async function() {
 								await expect( contract.connect( contract_deployer ).setSaleState( SALE_STATE.SALE ) ).to.emit( contract, CONTRACT.EVENTS.SaleStateChanged ).withArgs( SALE_STATE.CLOSED, SALE_STATE.SALE )
 							})
 
-							it( 'Contract should emit a "' + CONTRACT.EVENTS.SaleStateChanged + '" event mentioning the old statse is PRESALE and the new state is SALE', async () => {
+							it( 'Contract should emit a "' + CONTRACT.EVENTS.SaleStateChanged + '" event mentioning the old statse is PRESALE and the new state is SALE', async function() {
 								await contract.connect( contract_deployer ).setSaleState( SALE_STATE.PRESALE )
 								await expect( contract.connect( contract_deployer ).setSaleState( SALE_STATE.SALE ) ).to.emit( contract, CONTRACT.EVENTS.SaleStateChanged ).withArgs( SALE_STATE.PRESALE, SALE_STATE.SALE )
 							})
@@ -182,46 +186,46 @@ const shouldBehaveLikeIPausable = ( contract_name, contract_params ) => {
 					})
 
 					if ( TEST.METHODS.setSaleState ) {
-						describe( 'Setting the sale state to PRESALE', () => {
-							beforeEach( async () => {
+						describe( 'Setting the sale state to PRESALE', function() {
+							beforeEach( async function() {
 								await contract.connect( contract_deployer ).setSaleState( SALE_STATE.PRESALE )
 							})
 
-							it( 'Should be ' + SALE_STATE.PRESALE, async () => {
+							it( 'Should be ' + SALE_STATE.PRESALE, async function() {
 								expect( await contract.saleState() ).to.equal( SALE_STATE.PRESALE )
 							})
 
-							it( 'Should be reverted with ' + ERROR.IPausable_SALE_NOT_CLOSED, async () => {
+							it( 'Should be reverted with ' + ERROR.IPausable_SALE_NOT_CLOSED, async function() {
 								await expect( contract.saleIsClosed() ).to.be.revertedWith( ERROR.IPausable_SALE_NOT_CLOSED )
 							})
 
-							it( 'Should be true', async () => {
+							it( 'Should be true', async function() {
 								expect( await contract.presaleIsOpen() ).to.be.true
 							})
 
-							it( 'Should be reverted with ' + ERROR.IPausable_SALE_CLOSED, async () => {
+							it( 'Should be reverted with ' + ERROR.IPausable_SALE_CLOSED, async function() {
 								await expect( contract.saleIsOpen() ).to.be.revertedWith( ERROR.IPausable_SALE_CLOSED )
 							})
 						})
 
-						describe( 'Setting the sale state to SALE', () => {
-							beforeEach( async () => {
+						describe( 'Setting the sale state to SALE', function() {
+							beforeEach( async function() {
 								await contract.connect( contract_deployer ).setSaleState( SALE_STATE.SALE )
 							})
 
-							it( 'Should be ' + SALE_STATE.SALE, async () => {
+							it( 'Should be ' + SALE_STATE.SALE, async function() {
 								expect( await contract.saleState() ).to.equal( SALE_STATE.SALE )
 							})
 
-							it( 'Should be reverted with ' + ERROR.IPausable_SALE_NOT_CLOSED, async () => {
+							it( 'Should be reverted with ' + ERROR.IPausable_SALE_NOT_CLOSED, async function() {
 								await expect( contract.saleIsClosed() ).to.be.revertedWith( ERROR.IPausable_SALE_NOT_CLOSED )
 							})
 
-							it( 'Should be reverted with ' + ERROR.IPausable_PRESALE_CLOSED, async () => {
+							it( 'Should be reverted with ' + ERROR.IPausable_PRESALE_CLOSED, async function() {
 								await expect( contract.presaleIsOpen() ).to.be.revertedWith( ERROR.IPausable_PRESALE_CLOSED )
 							})
 
-							it( 'Should be true', async () => {
+							it( 'Should be true', async function() {
 								expect( await contract.saleIsOpen() ).to.be.true
 							})
 						})
@@ -230,9 +234,9 @@ const shouldBehaveLikeIPausable = ( contract_name, contract_params ) => {
 			}
 		})
 
-		describe( 'Invalid input ...', () => {
+		describe( 'Invalid input ...', function() {
 			if ( TEST.USE_CASES.INVALID_INPUT ) {
-				beforeEach( async () => {
+				beforeEach( async function() {
 					defaultArgs = {}
 					defaultArgs [ CONTRACT.METHODS.saleState.SIGNATURE ] = {
 						err  : null,
@@ -258,12 +262,12 @@ const shouldBehaveLikeIPausable = ( contract_name, contract_params ) => {
 					}
 				})
 
-				Object.entries( CONTRACT.METHODS ).forEach( ( [ prop, val ] ) => {
-					describe( val.SIGNATURE, () => {
+				Object.entries( CONTRACT.METHODS ).forEach( function( [ prop, val ] ) {
+					describe( val.SIGNATURE, function() {
 						const testSuite = getTestCasesByFunction( val.SIGNATURE, val.PARAMS )
 
 						testSuite.forEach( testCase => {
-							it( testCase.test_description, async () => {
+							it( testCase.test_description, async function() {
 								await generateTestCase( contract, testCase, defaultArgs, prop, val )
 							})
 						})

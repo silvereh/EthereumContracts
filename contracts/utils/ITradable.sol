@@ -12,12 +12,12 @@ contract ProxyRegistry {
 	mapping( address => OwnableDelegateProxy ) public proxies;
 }
 
-contract ITradable {
+abstract contract ITradable {
 	// OpenSea proxy registry address
-	address internal _proxyRegistryAddress;
+	address[] internal _proxyRegistries;
 
 	function _initITradable( address proxyRegistryAddress_ ) internal {
-		_proxyRegistryAddress = proxyRegistryAddress_;
+		_proxyRegistries.push( proxyRegistryAddress_ );
 	}
 
 	/**
@@ -26,9 +26,11 @@ contract ITradable {
 	* Note: Use this function to allow whitelisting of registered proxy.
 	*/
 	function _isRegisteredProxy( address tokenOwner_, address operator_ ) internal view returns ( bool ) {
-		ProxyRegistry _proxyRegistry_ = ProxyRegistry( _proxyRegistryAddress );
-		if ( address( _proxyRegistry_.proxies( tokenOwner_ ) ) == operator_ ) {
-			return true;
+		for ( uint256 i; i < _proxyRegistries.length; i++ ) {
+			ProxyRegistry _proxyRegistry_ = ProxyRegistry( _proxyRegistries[ i ] );
+			if ( address( _proxyRegistry_.proxies( tokenOwner_ ) ) == operator_ ) {
+				return true;
+			}
 		}
 		return false;
 	}

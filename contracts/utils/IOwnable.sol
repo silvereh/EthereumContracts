@@ -28,13 +28,13 @@ abstract contract IOwnable {
 	/**
 	* @dev Emitted when contract ownership changes.
 	*/
-	event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+	event OwnershipTransferred( address indexed previousOwner, address indexed newOwner );
 
 	/**
 	* @dev Initializes the contract setting the deployer as the initial owner.
 	*/
-	function _initIOwnable() internal {
-		_owner = msg.sender;
+	function _initIOwnable( address owner_ ) internal {
+		_owner = owner_;
 	}
 
 	/**

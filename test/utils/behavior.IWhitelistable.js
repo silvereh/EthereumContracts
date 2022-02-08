@@ -4,10 +4,10 @@ const chaiAsPromised = require( 'chai-as-promised' )
 chai.use( chaiAsPromised )
 
 const expect = chai.expect ;
-const { ethers } = require( 'hardhat' )
+const { ethers, waffle } = require( 'hardhat' )
+const { loadFixture } = waffle
 
-const { getTestCasesByFunction, generateFailTest, generateTestCase } = require( '../fail-test-module' )
-const { deployContract } = require( '../contract-deployment-module' )
+const { getTestCasesByFunction, generateTestCase } = require( '../fail-test-module' )
 
 const {
 	contract_deployer_name,
@@ -57,7 +57,7 @@ const CONTRACT = {
 	},
 }
 
-const generatePass = ( address, root ) => {
+const generatePass = function ( address, root ) {
 	const addr = ethers.BigNumber.from( ethers.utils.keccak256( address ) )
 	const temp = ethers.BigNumber.from( ethers.BigNumber.from( root ).sub( addr ) )
 	const flag = temp.gt( CST.NUMBER_ZERO ) ? false : true
@@ -66,43 +66,49 @@ const generatePass = ( address, root ) => {
 	return { pass: pass, flag: flag }
 }
 
-const shouldBehaveLikeIWhitelistable = ( contract_name, contract_params ) => {
-	describe( 'Should behave like IWhitelistable', () => {
+const shouldBehaveLikeIWhitelistable = function( fixture, contract_params ) {
+	describe( 'Should behave like IWhitelistable', function() {
 		let contract_deployer_address
-		let token_owner_address
-		let proxy_user_address
-		let wl_user1_address
-		let wl_user2_address
-		let user1_address
-		let user2_address
-
 		let contract_deployer
+
+		let token_owner_address
 		let token_owner
+
+		let proxy_user_address
 		let proxy_user
+
+		let wl_user1_address
 		let wl_user1
+
+		let wl_user2_address
 		let wl_user2
+
+		let contract_address
+		let contract
+
+		let user1_address
 		let user1
+
+		let user2_address
 		let user2
 
 		let addrs
 
-		let contract
-		let contract_address
-		let contract_artifact
-
 		let wl_user1_pass
-		let wl_user2_pass
-		let user1_pass
-		let user2_pass
-
 		let wl_user1_flag
-		let wl_user2_flag
+
+		let user1_pass
 		let user1_flag
+
+		let wl_user2_pass
+		let wl_user2_flag
+
+		let user2_pass
 		let user2_flag
 
-		before( async () => {
+		before( async function() {
 			[
-				contract_deployer,
+				x,
 				token_owner,
 				proxy_user,
 				wl_user1,
@@ -112,7 +118,6 @@ const shouldBehaveLikeIWhitelistable = ( contract_name, contract_params ) => {
 				...addrs
 			] = await ethers.getSigners()
 
-			contract_deployer_address = contract_deployer.address
 			token_owner_address = token_owner.address
 			proxy_user_address = proxy_user.address
 			wl_user1_address = wl_user1.address
@@ -135,78 +140,79 @@ const shouldBehaveLikeIWhitelistable = ( contract_name, contract_params ) => {
 			newPass = generatePass( user2_address, contract_params.PASS_ROOT )
 			user2_pass = newPass.pass
 			user2_flag = newPass.flag
-
-			contract_artifact = await ethers.getContractFactory( contract_name )
 		})
 
-		beforeEach( async () => {
-			contract = await deployContract( contract_artifact, contract_params.CONSTRUCT )
-			contract_address = contract.address
+		beforeEach( async function() {
+			const { test_contract, test_contract_deployer } = await loadFixture( fixture )
+			contract = test_contract
+			contract_deployer = test_contract_deployer
+			contract_deployer_address = test_contract_deployer.address
+			contract_address = test_contract.address
 		})
 
-		describe( 'Correct input ...', () => {
+		describe( 'Correct input ...', function() {
 			if ( TEST.USE_CASES.CORRECT_INPUT ) {
-				describe( CONTRACT.METHODS.checkWhitelistAllowance.SIGNATURE, () => {
+				describe( CONTRACT.METHODS.checkWhitelistAllowance.SIGNATURE, function() {
 					if ( TEST.METHODS.checkWhitelistAllowance ) {
-						it( 'Checking whitelist while whitelist is not set should be reverted with ' + ERROR.IWhitelistable_NOT_SET, async () => {
+						it( 'Checking whitelist while whitelist is not set should be reverted with ' + ERROR.IWhitelistable_NOT_SET, async function() {
 							await expect( contract.checkWhitelistAllowance( wl_user1_address, wl_user1_pass, wl_user1_flag ) ).to.be.revertedWith( ERROR.IWhitelistable_NOT_SET )
 						})
 					}
 				})
 
-				describe( CONTRACT.METHODS.consumeWhitelist.SIGNATURE, () => {
+				describe( CONTRACT.METHODS.consumeWhitelist.SIGNATURE, function() {
 					if ( TEST.METHODS.consumeWhitelist ) {
-						it( 'Trying to consume whitelist while whitelist is not set should be reverted with ' + ERROR.IWhitelistable_FORBIDDEN, async () => {
+						it( 'Trying to consume whitelist while whitelist is not set should be reverted with ' + ERROR.IWhitelistable_FORBIDDEN, async function() {
 							await expect( contract.consumeWhitelist( wl_user1_address, wl_user1_pass, wl_user1_flag, 1 ) ).to.be.revertedWith( ERROR.IWhitelistable_FORBIDDEN )
 						})
 					}
 				})
 
-				describe( CONTRACT.METHODS.setWhitelist.SIGNATURE, () => {
+				describe( CONTRACT.METHODS.setWhitelist.SIGNATURE, function() {
 					if ( TEST.METHODS.setWhitelist ) {
-						it( 'Trying to set a whitelist with no allowance should be reverted with ' + ERROR.IWhitelistable_NO_ALLOWANCE, async () => {
+						it( 'Trying to set a whitelist with no allowance should be reverted with ' + ERROR.IWhitelistable_NO_ALLOWANCE, async function() {
 							await expect( contract.setWhitelist( contract_params.PASS_ROOT, 0 ) ).to.be.revertedWith( ERROR.IWhitelistable_NO_ALLOWANCE )
 						})
 
-						describe( 'Setting up the whitelist', () => {
-							beforeEach( async () => {
+						describe( 'Setting up the whitelist', function() {
+							beforeEach( async function() {
 								await contract.setWhitelist( contract_params.PASS_ROOT.toHexString(), contract_params.PASS_MAX )
 							})
 
-							describe( CONTRACT.METHODS.checkWhitelistAllowance.SIGNATURE, () => {
+							describe( CONTRACT.METHODS.checkWhitelistAllowance.SIGNATURE, function() {
 								if ( TEST.METHODS.checkWhitelistAllowance ) {
-									it( 'Checking whitelist with correct password should return ' + contract_params.PASS_MAX, async() => {
+									it( 'Checking whitelist with correct password should return ' + contract_params.PASS_MAX, async function() {
 										expect( await contract.checkWhitelistAllowance( wl_user1_address, wl_user1_pass, wl_user1_flag ) ).to.equal( contract_params.PASS_MAX )
 									})
 
-									it( 'Checking whitelist with incorrect password should be reverted with ' + ERROR.IWhitelistable_FORBIDDEN, async () => {
+									it( 'Checking whitelist with incorrect password should be reverted with ' + ERROR.IWhitelistable_FORBIDDEN, async function() {
 										await expect( contract.checkWhitelistAllowance( wl_user1_address, user1_pass, wl_user1_flag ) ).to.be.revertedWith( ERROR.IWhitelistable_FORBIDDEN )
 									})
 								}
 							})
 
-							describe( CONTRACT.METHODS.consumeWhitelist.SIGNATURE, () => {
+							describe( CONTRACT.METHODS.consumeWhitelist.SIGNATURE, function() {
 								if ( TEST.METHODS.consumeWhitelist ) {
-									describe( 'Consuming 1 whitelist spot', () => {
-										beforeEach( async () => {
+									describe( 'Consuming 1 whitelist spot', function() {
+										beforeEach( async function() {
 											await contract.connect( wl_user1 ).consumeWhitelist( wl_user1_address, wl_user1_pass, wl_user1_flag, 1 )
 										})
 
-										it( 'Whitelist check should return ' + ( contract_params.PASS_MAX - 1 ).toString(), async () => {
+										it( 'Whitelist check should return ' + ( contract_params.PASS_MAX - 1 ).toString(), async function() {
 											expect( await contract.checkWhitelistAllowance( wl_user1_address, wl_user1_pass, wl_user1_flag ) ).to.equal( contract_params.PASS_MAX - 1 )
 										})
 
-										it( 'Trying to consume an additional ' + contract_params.PASS_MAX + ' whitelist spots should be reverted with ' + ERROR.IWhitelistable_FORBIDDEN, async () => {
+										it( 'Trying to consume an additional ' + contract_params.PASS_MAX + ' whitelist spots should be reverted with ' + ERROR.IWhitelistable_FORBIDDEN, async function() {
 											await expect( contract.connect( wl_user1 ).consumeWhitelist( wl_user1_address, wl_user1_pass, wl_user1_flag, contract_params.PASS_MAX ) ).to.be.revertedWith( ERROR.IWhitelistable_FORBIDDEN )
 										})
 									})
 
-									describe( 'Consuming ' + contract_params.PASS_MAX + ' whitelist spots', () => {
-										beforeEach( async () => {
+									describe( 'Consuming ' + contract_params.PASS_MAX + ' whitelist spots', function() {
+										beforeEach( async function() {
 											await contract.connect( wl_user1 ).consumeWhitelist( wl_user1_address, wl_user1_pass, wl_user1_flag, contract_params.PASS_MAX )
 										})
 
-										it( 'Whitelist check should be reverted with ' + ERROR.IWhitelistable_CONSUMED, async () => {
+										it( 'Whitelist check should be reverted with ' + ERROR.IWhitelistable_CONSUMED, async function() {
 											await expect( contract.checkWhitelistAllowance( wl_user1_address, wl_user1_pass, wl_user1_flag ) ).to.be.revertedWith( ERROR.IWhitelistable_CONSUMED )
 										})
 									})
@@ -218,9 +224,9 @@ const shouldBehaveLikeIWhitelistable = ( contract_name, contract_params ) => {
 			}
 		})
 
-		describe( 'Invalid input ...', () => {
+		describe( 'Invalid input ...', function() {
 			if ( TEST.USE_CASES.INVALID_INPUT ) {
-				beforeEach( async () => {
+				beforeEach( async function() {
 					defaultArgs = {}
 					defaultArgs [ CONTRACT.METHODS.setWhitelist.SIGNATURE ] = {
 						err  : null,
@@ -248,12 +254,12 @@ const shouldBehaveLikeIWhitelistable = ( contract_name, contract_params ) => {
 					}
 				})
 
-				Object.entries( CONTRACT.METHODS ).forEach( ( [ prop, val ] ) => {
-					describe( val.SIGNATURE, () => {
+				Object.entries( CONTRACT.METHODS ).forEach( function( [ prop, val ] ) {
+					describe( val.SIGNATURE, function() {
 						const testSuite = getTestCasesByFunction( val.SIGNATURE, val.PARAMS )
 
 						testSuite.forEach( testCase => {
-							it( testCase.test_description, async () => {
+							it( testCase.test_description, async function() {
 								await generateTestCase( contract, testCase, defaultArgs, prop, val )
 							})
 						})

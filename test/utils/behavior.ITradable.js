@@ -4,10 +4,10 @@ const chaiAsPromised = require( 'chai-as-promised' )
 chai.use( chaiAsPromised )
 
 const expect = chai.expect ;
-const { ethers } = require( 'hardhat' )
+const { ethers, waffle } = require( 'hardhat' )
+const { loadFixture } = waffle
 
-const { getTestCasesByFunction, generateFailTest, generateTestCase } = require( '../fail-test-module' )
-const { deployContract } = require( '../contract-deployment-module' )
+const { getTestCasesByFunction, generateTestCase } = require( '../fail-test-module' )
 
 const {
 	contract_deployer_name,
@@ -47,37 +47,39 @@ const CONTRACT = {
 	},
 }
 
-const shouldBehaveLikeITradable = ( contract_name, contract_params ) => {
-	describe( 'Should behave like ITradable', () => {
+const shouldBehaveLikeITradable = function( fixture, contract_params ) {
+	describe( 'Should behave like ITradable', function() {
 		let contract_deployer_address
-		let token_owner_address
-		let proxy_user_address
-		let wl_user1_address
-		let wl_user2_address
-		let user1_address
-		let user2_address
-
 		let contract_deployer
+
+		let proxy_contract
+
+		let token_owner_address
 		let token_owner
+
+		let proxy_user_address
 		let proxy_user
+
+		let wl_user1_address
 		let wl_user1
+
+		let wl_user2_address
 		let wl_user2
+
+		let contract_address
+		let contract
+
+		let user1_address
 		let user1
+
+		let user2_address
 		let user2
 
 		let addrs
 
-		let contract
-		let contract_address
-		let contract_artifact
-
-		let proxy
-		let proxy_address
-		let proxy_artifact
-
-		before( async () => {
+		before( async function() {
 			[
-				contract_deployer,
+				x,
 				token_owner,
 				proxy_user,
 				wl_user1,
@@ -87,37 +89,33 @@ const shouldBehaveLikeITradable = ( contract_name, contract_params ) => {
 				...addrs
 			] = await ethers.getSigners()
 
-			contract_deployer_address = contract_deployer.address
 			token_owner_address = token_owner.address
 			proxy_user_address = proxy_user.address
 			wl_user1_address = wl_user1.address
 			wl_user2_address = wl_user2.address
 			user1_address = user1.address
 			user2_address = user2.address
-
-			proxy_artifact = await ethers.getContractFactory( 'Mock_ProxyRegistry' )
-			proxy = await proxy_artifact.deploy()
-			await proxy.deployed()
-			proxy_address = proxy.address
-			await proxy.setProxy( token_owner_address, proxy_user_address )
-
-			contract_artifact = await ethers.getContractFactory( contract_name )
 		})
 
-		beforeEach( async () => {
-			contract = await deployContract( contract_artifact, [ proxy_address ] )
-			contract_address = contract.address
+		beforeEach( async function() {
+			const { test_contract, test_contract_deployer, test_proxy_contract } = await loadFixture( fixture )
+			contract = test_contract
+			proxy_contract = test_proxy_contract
+			contract_deployer = test_contract_deployer
+			contract_deployer_address = test_contract_deployer.address
+			contract_address = test_contract.address
+			await proxy_contract.setProxy( token_owner_address, proxy_user_address )
 		})
 
-		describe( 'Correct input ...', () => {
+		describe( 'Correct input ...', function() {
 			if ( TEST.USE_CASES.CORRECT_INPUT ) {
-				describe( CONTRACT.METHODS.isRegisteredProxy.SIGNATURE, () => {
+				describe( CONTRACT.METHODS.isRegisteredProxy.SIGNATURE, function() {
 					if ( TEST.METHODS.isRegisteredProxy ) {
-						it( proxy_user_name + ' is a registered proxy for ' + token_owner_name, async () => {
+						it( proxy_user_name + ' is a registered proxy for ' + token_owner_name, async function() {
 							expect( await contract.isRegisteredProxy( token_owner_address, proxy_user_address ) ).to.be.true
 						})
 
-						it( proxy_user_name + ' is not a registerd proxy for ' + contract_deployer_name, async () => {
+						it( proxy_user_name + ' is not a registerd proxy for ' + contract_deployer_name, async function() {
 							expect( await contract.isRegisteredProxy( contract_deployer_address, proxy_user_address ) ).to.be.false
 						})
 					}
@@ -125,9 +123,9 @@ const shouldBehaveLikeITradable = ( contract_name, contract_params ) => {
 			}
 		})
 
-		describe( 'Invalid input ...', () => {
+		describe( 'Invalid input ...', function() {
 			if ( TEST.USE_CASES.INVALID_INPUT ) {
-				beforeEach( async () => {
+				beforeEach( async function() {
 					defaultArgs = {}
 					defaultArgs [ CONTRACT.METHODS.isRegisteredProxy.SIGNATURE ] = {
 						err  : null,
@@ -138,12 +136,12 @@ const shouldBehaveLikeITradable = ( contract_name, contract_params ) => {
 					}
 				})
 
-				Object.entries( CONTRACT.METHODS ).forEach( ( [ prop, val ] ) => {
-					describe( val.SIGNATURE, () => {
+				Object.entries( CONTRACT.METHODS ).forEach( function( [ prop, val ] ) {
+					describe( val.SIGNATURE, function() {
 						const testSuite = getTestCasesByFunction( val.SIGNATURE, val.PARAMS )
 
 						testSuite.forEach( testCase => {
-							it( testCase.test_description, async () => {
+							it( testCase.test_description, async function() {
 								await generateTestCase( contract, testCase, defaultArgs, prop, val )
 							})
 						})

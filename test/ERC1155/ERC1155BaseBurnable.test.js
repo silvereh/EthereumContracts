@@ -1,5 +1,12 @@
+const { ethers, waffle } = require( 'hardhat' )
+
+const { deployContract } = waffle
+
+const ARTIFACT = require( '../../artifacts/contracts/mocks/tokens/Mock_ERC1155BaseBurnable.sol/Mock_ERC1155BaseBurnable.json' )
+
 const { TEST_ACTIVATION } = require( '../test-activation-module' )
-const { shouldBehaveLikeERC1155BaseBurnable } = require( './ERC1155BaseBurnable.behavior' )
+const { shouldBehaveLikeERC1155Base } = require( './behavior.ERC1155Base' )
+const { shouldBehaveLikeERC1155BaseBurnable } = require( './behavior.ERC1155BaseBurnable' )
 
 // For activating or de-activating test cases
 const TEST = {
@@ -16,8 +23,20 @@ const CONTRACT = {
 	},
 }
 
-describe( TEST.NAME, () => {
+async function fixture() {
+	[
+		test_contract_deployer,
+		...addrs
+	] = await ethers.getSigners()
+
+	const params = []
+	let test_contract = await deployContract( test_contract_deployer, ARTIFACT, params )
+	return { test_contract, test_contract_deployer }
+}
+
+describe( TEST.NAME, function() {
 	if ( TEST_ACTIVATION[ TEST.NAME ] ) {
-		shouldBehaveLikeERC1155BaseBurnable( CONTRACT.NAME, CONTRACT.PARAMS )
+		shouldBehaveLikeERC1155Base( fixture, CONTRACT.PARAMS )
+		shouldBehaveLikeERC1155BaseBurnable( fixture, CONTRACT.PARAMS )
 	}
 })

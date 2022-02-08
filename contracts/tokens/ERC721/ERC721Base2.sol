@@ -80,7 +80,7 @@ abstract contract ERC721Base2 is IERC165, IERC721 {
 	*/
 	function balanceOf( address tokenOwner_ ) public view virtual override returns ( uint256 ) {
 		if ( tokenOwner_ == address( 0 ) ) {
-			revert IERC721_NULL_ADDRESS_BALANCE();
+			return 0;
 		}
 		uint256 _count_ = 0;
 		for ( uint256 i = 0; i < _supplyMinted(); i++ ) {

@@ -21,7 +21,7 @@ import "../../tokens/ERC721/ERC721B.sol";
 * those functions should be avoided inside non-view functions.
 */
 contract Mock_ERC721B is ERC721B {
-	constructor() ERC721B( 'Token Name', 'NFT' ) {}
+	constructor( string memory name_, string memory symbol_ ) ERC721B( name_, symbol_ ) {}
 
 	function mint() public {
 		_mint( msg.sender, _owners.length );

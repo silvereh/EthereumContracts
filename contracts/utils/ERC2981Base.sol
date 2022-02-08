@@ -7,7 +7,7 @@
 pragma solidity 0.8.10;
 
 import "../interfaces/IERC2981.sol";
-import '@openzeppelin/contracts/interfaces/IERC165.sol';
+import "../interfaces/IERC165.sol";
 
 abstract contract ERC2981Base is IERC165, IERC2981 {
 	// Errors
@@ -19,13 +19,13 @@ abstract contract ERC2981Base is IERC165, IERC2981 {
 
 	// Represents the percentage of royalties on each sale on secondary markets.
 	// Set to 0 to have no royalties.
-	uint256 private _rate;
+	uint256 private _royaltyRate;
 
 	// Address of the recipient of the royalties.
 	address private _recipient;
 
-	function _initERC2981Base( address recipient_, uint256 rate_ ) internal {
-		_setRoyaltyInfo( recipient_, rate_ );
+	function _initERC2981Base( address recipient_, uint256 royaltyRate_ ) internal {
+		_setRoyaltyInfo( recipient_, royaltyRate_ );
 	}
 
 	/**
@@ -34,10 +34,10 @@ abstract contract ERC2981Base is IERC165, IERC2981 {
 	* Note: This function should be overriden to revert on a query for non existent token.
 	*/
 	function royaltyInfo( uint256 tokenId_, uint256 salePrice_ ) external view virtual override returns ( address, uint256 ) {
-		if ( salePrice_ == 0 || _rate == 0 ) {
+		if ( salePrice_ == 0 || _royaltyRate == 0 ) {
 			return ( _recipient, 0 );
 		}
-		uint256 _royaltyAmount_ = _rate * salePrice_ / ROYALTY_BASE;
+		uint256 _royaltyAmount_ = _royaltyRate * salePrice_ / ROYALTY_BASE;
 		return ( _recipient, _royaltyAmount_ );
 	}
 
@@ -48,11 +48,11 @@ abstract contract ERC2981Base is IERC165, IERC2981 {
 	* 
 	* - `royaltyRate_` cannot be higher than `ROYALTY_BASE`;
 	*/
-	function _setRoyaltyInfo( address recipient_, uint256 rate_ ) internal virtual {
-		if ( rate_ > ROYALTY_BASE ) {
+	function _setRoyaltyInfo( address recipient_, uint256 royaltyRate_ ) internal virtual {
+		if ( royaltyRate_ > ROYALTY_BASE ) {
 			revert IERC2981_INVALID_ROYALTIES();
 		}
-		_rate = rate_;
+		_royaltyRate = royaltyRate_;
 		_recipient = recipient_;
 	}
 

@@ -5,6 +5,7 @@ chai.use( chaiAsPromised )
 
 const expect = chai.expect
 const { ethers } = require( 'hardhat' )
+
 const { TEST_ACTIVATION } = require( '../test-activation-module' )
 const { deployContract } = require( '../contract-deployment-module' )
 
@@ -46,7 +47,7 @@ const CONTRACTS = [
 ]
 
 const transferBehavior = ( contract_name ) => {
-	describe( contract_name, () => {
+	describe( contract_name, function() {
 		let contract_deployer_address
 		let token_owner_address
 		let user1_address
@@ -61,7 +62,7 @@ const transferBehavior = ( contract_name ) => {
 		let contract_address
 		let contract_artifact
 
-		before( async () => {
+		before( async function() {
 			[
 				contract_deployer,
 				token_owner,
@@ -76,14 +77,14 @@ const transferBehavior = ( contract_name ) => {
 			contract_artifact = await ethers.getContractFactory( contract_name )
 		})
 
-		beforeEach( async () => {
+		beforeEach( async function() {
 			const params = []
-			contract = await deployContract( contract_artifact, params )
+			contract = await deployContract( contract_artifact, false, params )
 			contract_address = contract.address
 			await contract.connect( token_owner ).mint_01()
 		})
 
-		it( 'Transfer a token', async () => {
+		it( 'Transfer a token', async function() {
 			await contract.connect( token_owner ).functions['safeTransferFrom(address,address,uint256)']( token_owner_address, user1_address, 0 )
 			expect( await contract.ownerOf( 0 ) ).to.equal( user1_address )
 		})
